@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit 7 What do you want? マーケット</title>
+<style>
+:root{
+  --bg:#fffaf0; --panel:#ffffff; --ink:#2b2b3a; --sub:#6b6b80; --line:#e6dfcf;
+  --pri:#ff7a45; --pri-ink:#fff; --ok:#2fb36b; --ng:#e5484d; --blue:#3a7bd5; --star:#ffc93c;
+  --c1:#ff7a45; --c2:#3a7bd5; --c3:#2fb36b; --c4:#a35ee8; --c5:#e5a100;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","BIZ UDPGothic","Noto Sans JP",system-ui,sans-serif;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--panel);border-bottom:3px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+header h1{font-size:clamp(16px,2.6vw,24px);margin:0;flex:1 1 auto;white-space:nowrap}
+.hbtn{min-height:48px;min-width:48px;padding:6px 14px;border-radius:14px;border:2px solid var(--line);background:#fff;font-weight:700}
+#teacherBtn{position:relative;overflow:hidden}
+#teacherBtn .fill{position:absolute;left:0;top:0;bottom:0;width:0;background:#ffe2d3;z-index:-1}
+#scores{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+#scores:empty{display:none}
+.chip{padding:4px 12px;border-radius:999px;font-weight:700;border:3px solid transparent;background:#f3efe4;font-size:clamp(14px,2.2vw,18px)}
+.chip.turn{border-color:var(--pri);background:#fff1e9}
+main{padding:12px;max-width:1200px;margin:0 auto}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.gbtn{border:none;border-radius:22px;padding:18px;min-height:140px;text-align:left;color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.18);display:flex;flex-direction:column;gap:6px}
+.gbtn:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.gbtn b{font-size:clamp(20px,3vw,28px)} .gbtn span{font-size:15px;opacity:.95} .gbtn i{font-style:normal;font-size:34px}
+.bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.bar .grow{flex:1}
+.big{min-height:60px;padding:8px 20px;border-radius:16px;border:none;background:var(--pri);color:var(--pri-ink);font-weight:800;font-size:clamp(17px,2.6vw,22px);box-shadow:0 4px 0 rgba(0,0,0,.18)}
+.big:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.big.blue{background:var(--blue)} .big.gray{background:#8b8b9a} .big.green{background:var(--ok)} .big.purple{background:var(--c4)}
+.big:disabled{opacity:.4}
+.seg{display:inline-flex;border:2px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;flex-wrap:wrap}
+.seg button{min-height:52px;padding:6px 14px;border:none;background:#fff;font-weight:700}
+.seg button.on{background:var(--pri);color:#fff}
+.msg{font-size:clamp(18px,3vw,26px);font-weight:800;text-align:center;margin:6px 0}
+.note{color:var(--sub);font-size:14px}
+.timer{height:12px;border-radius:6px;background:#eee;overflow:hidden;margin:4px 0 10px}
+.timer i{display:block;height:100%;background:var(--blue);width:100%;transition:width .25s linear}
+.emo{font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;line-height:1}
+.en{font-family:"Century Gothic","Avenir Next","Segoe UI",Roboto,Arial,sans-serif}
+.cards{display:grid;gap:12px;grid-template-columns:repeat(var(--cols,3),1fr)}
+.card{aspect-ratio:1/1;border-radius:20px;border:4px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;position:relative}
+.card .emo{font-size:min(15vw,84px)}
+.card .lab{font-size:clamp(14px,2.2vw,20px);font-weight:700}
+.card:active{transform:scale(.97)}
+.card.ok{border-color:var(--ok);background:#e8f8ef}
+.card.ng{border-color:var(--ng);background:#fdecec;opacity:.55}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+/* 神経衰弱 */
+.mem .card{background:linear-gradient(135deg,#9bd88a,#2fb36b);border-color:#cdeec2}
+.mem .card .face{display:none;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%}
+.mem .card.open{background:#fff;border-color:var(--line)} .mem .card.open .face{display:flex}
+.mem .card.done{background:#e8f8ef;border-color:var(--ok)}
+.mem .card .q{font-size:min(10vw,56px);color:#fff;font-weight:800}
+.mem .card.open .q{display:none}
+.mem .word{font-size:clamp(18px,3.4vw,34px);font-weight:800;text-align:center;word-break:break-word}
+/* お店 */
+.shop{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media (orientation:landscape) and (min-width:800px){.shop{grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr)}}
+.counter{background:#fff;border:3px solid var(--line);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.cust{display:flex;align-items:center;gap:12px}
+.cust .emo{font-size:72px}
+.bubble{flex:1;background:#eef5ff;border:3px solid #c8dcf8;border-radius:18px;padding:10px 14px;font-size:clamp(18px,2.8vw,26px);font-weight:700;min-height:64px;display:flex;align-items:center}
+.bubble.hide .txt{filter:blur(7px)}
+.basket{min-height:90px;border:3px dashed var(--line);border-radius:16px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:#fffdf7}
+.basket .emo{font-size:44px}
+.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.nums button{min-height:64px;border-radius:14px;border:3px solid var(--line);background:#fff;font-size:28px;font-weight:800}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;align-content:start}
+.shelf button{aspect-ratio:1/1;border-radius:16px;border:3px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px}
+.shelf button .emo{font-size:44px}
+.shelf button .lab{font-size:13px;font-weight:700}
+.shelf button.pick{border-color:var(--blue);background:#eef5ff}
+/* パフェ・ピザ */
+.make{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media (orientation:landscape) and (min-width:800px){.make{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.stage{position:relative;width:100%;max-width:520px;margin:0 auto;aspect-ratio:1/1;background:#fff;border-radius:20px;border:3px solid var(--line);overflow:hidden}
+.stage svg{position:absolute;inset:0;width:100%;height:100%}
+.stage .put{position:absolute;transform:translate(-50%,-50%);font-size:clamp(34px,7vw,58px);pointer-events:none;animation:drop .35s ease-out}
+.stage .put.still{animation:none}
+@keyframes drop{from{transform:translate(-50%,-140%) scale(.6);opacity:0}}
+.present{text-align:center}
+.present .line{font-size:clamp(22px,4vw,38px);font-weight:800;margin:10px 0}
+.result{text-align:center;padding:20px}
+.result .stars{font-size:min(16vw,80px);color:var(--star);letter-spacing:6px}
+.fx{position:fixed;pointer-events:none;font-size:34px;color:var(--star);z-index:50;animation:fly 1s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) scale(.4) rotate(200deg);opacity:0}}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-start;justify-content:center;padding:16px;overflow:auto}
+.sheet{background:#fff;border-radius:20px;padding:18px;max-width:900px;width:100%}
+.sheet h2{margin:4px 0 12px;font-size:22px}
+.sheet h3{margin:18px 0 8px;font-size:18px;border-left:6px solid var(--pri);padding-left:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#2b2b3a;color:#fff;padding:10px 18px;border-radius:14px;z-index:60;font-weight:700}
+</style>
+</head>
+<body>
+<header>
+  <button class="hbtn" id="homeBtn" aria-label="ホーム">🏠 ホーム</button>
+  <h1>Unit 7 What do you want? マーケット</h1>
+  <button class="hbtn" id="teacherBtn" title="長押しで開きます"><span class="fill"></span>⚙ 先生用（長押し）</button>
+  <div id="scores"></div>
+</header>
+<main id="app"></main>
+
+<script>
+"use strict";
+/* ========== ことば（Let's Try! 2 Unit 7 の市場の絵の語） ========== */
+const WORDS = [
+  { id:"onion",      cat:"veg",   e:"🧅", one:"onion",       many:"onions",       ja:"たまねぎ" },
+  { id:"mushroom",   cat:"veg",   e:"🍄", one:"mushroom",    many:"mushrooms",    ja:"きのこ" },
+  { id:"greenpepper",cat:"veg",   e:"🫑", one:"green pepper",many:"green peppers",ja:"ピーマン" },
+  { id:"tomato",     cat:"veg",   e:"🍅", one:"tomato",      many:"tomatoes",     ja:"トマト" },
+  { id:"cabbage",    cat:"veg",   e:"🥬", one:"cabbage",     many:"cabbages",     ja:"キャベツ" },
+  { id:"corn",       cat:"veg",   e:"🌽", one:"corn",        many:"corn",         ja:"とうもろこし" },
+  { id:"carrot",     cat:"veg",   e:"🥕", one:"carrot",      many:"carrots",      ja:"にんじん" },
+  { id:"cucumber",   cat:"veg",   e:"🥒", one:"cucumber",    many:"cucumbers",    ja:"きゅうり" },
+  { id:"potato",     cat:"veg",   e:"🥔", one:"potato",      many:"potatoes",     ja:"じゃがいも" },
+  { id:"melon",      cat:"fruit", e:"🍈", one:"melon",       many:"melons",       ja:"メロン" },
+  { id:"peach",      cat:"fruit", e:"🍑", one:"peach",       many:"peaches",      ja:"もも" },
+  { id:"banana",     cat:"fruit", e:"🍌", one:"banana",      many:"bananas",      ja:"バナナ" },
+  { id:"apple",      cat:"fruit", e:"🍎", one:"apple",       many:"apples",       ja:"りんご" },
+  { id:"pineapple",  cat:"fruit", e:"🍍", one:"pineapple",   many:"pineapples",   ja:"パイナップル" },
+  { id:"cherry",     cat:"fruit", e:"🍒", one:"cherry",      many:"cherries",     ja:"さくらんぼ" },
+  { id:"strawberry", cat:"fruit", e:"🍓", one:"strawberry",  many:"strawberries", ja:"いちご" },
+  { id:"orange",     cat:"fruit", e:"🍊", one:"orange",      many:"oranges",      ja:"オレンジ" },
+  { id:"kiwi",       cat:"fruit", e:"🥝", one:"kiwi fruit",  many:"kiwi fruits",  ja:"キウイフルーツ" }
+];
+const W = Object.fromEntries(WORDS.map(w=>[w.id,w]));
+const NUMS = ["one","two","three","four","five"];
+const CUSTOMERS = ["🧑","👩","👨","👧","👦","👵","👴","🧒"];
+const TEAM_COLORS = ["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","#16a3b8","#d6336c","#5c7cfa"];
+
+/* ========== 保存（設定・得点） ========== */
+const DEF = { cat:"all", time:0, teams:0, rate:0.8, sub:false, spell:true };
+function load(k, d){ try{ const v = localStorage.getItem(k); return v ? Object.assign({}, d, JSON.parse(v)) : Object.assign({}, d); }catch(e){ return Object.assign({}, d); } }
+function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+let S = load("u7-settings", DEF);
+let SC = load("u7-scores", { pts:[0,0,0,0,0,0,0,0], solo:0, turn:0 });
+
+/* ========== 音 ========== */
+let AC = null;
+function ac(){ if(!AC){ try{ AC = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==="suspended") AC.resume(); return AC; }
+function tone(f, t0, dur, type, vol){ const a = ac(); if(!a) return; const o = a.createOscillator(), g = a.createGain();
+  o.type = type||"sine"; o.frequency.value = f; g.gain.setValueAtTime(vol||.25, a.currentTime+t0); g.gain.exponentialRampToValueAtTime(.001, a.currentTime+t0+dur);
+  o.connect(g).connect(a.destination); o.start(a.currentTime+t0); o.stop(a.currentTime+t0+dur+.05); }
+const sfx = {
+  ok(){ tone(784,0,.18); tone(1047,.12,.3); },
+  ng(){ tone(180,0,.25,"square",.12); },
+  flip(){ tone(520,0,.06,"triangle",.15); },
+  pop(){ tone(660,0,.08,"triangle",.18); tone(990,.06,.08,"triangle",.12); },
+  bell(){ tone(1320,0,.4,"sine",.2); tone(1760,.08,.5,"sine",.12); },
+  clap(){ const a = ac(); if(!a) return; const len = a.sampleRate*1.3, buf = a.createBuffer(1,len,a.sampleRate), d = buf.getChannelData(0);
+    for(let n=0;n<14;n++){ const st = Math.floor((n*0.085+Math.random()*.04)*a.sampleRate); for(let i=0;i<2200&&st+i<len;i++) d[st+i] += (Math.random()*2-1)*Math.exp(-i/350)*.6; }
+    const s = a.createBufferSource(); s.buffer = buf; const f = a.createBiquadFilter(); f.type="bandpass"; f.frequency.value=1500; s.connect(f).connect(a.destination); s.start(); },
+  fan(){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.12,.3)); }
+};
+let enVoice = null;
+function pickVoice(){ try{ const vs = speechSynthesis.getVoices(); enVoice = vs.find(v=>/en[-_]US/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null; }catch(e){} }
+if("speechSynthesis" in window){ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function tts(text, onend){
+  if(!("speechSynthesis" in window)){ if(onend) setTimeout(onend, 600); return; }
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; if(enVoice) u.voice = enVoice; u.rate = S.rate;
+    if(onend){ let done = false; const fin = ()=>{ if(!done){ done = true; onend(); } }; u.onend = fin; setTimeout(fin, 900 + text.length*90/S.rate); }
+    speechSynthesis.speak(u); }catch(e){ if(onend) onend(); }
+}
+
+/* ========== 共通の道具 ========== */
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const app = $("#app");
+const rnd = n => Math.floor(Math.random()*n);
+const shuffle = a => { a = a.slice(); for(let i=a.length-1;i>0;i--){ const j = rnd(i+1); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+let cleanup = [], GEN = 0;
+function later(fn, ms){ const g = GEN; setTimeout(()=>{ if(g===GEN) fn(); }, ms); }
+function onLeave(fn){ cleanup.push(fn); }
+function leave(){ GEN++; cleanup.forEach(f=>{ try{f()}catch(e){} }); cleanup = []; try{ speechSynthesis.cancel(); }catch(e){} }
+function toast(t){ const d = document.createElement("div"); d.className="toast"; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2200); }
+function starsAt(el){ const r = el.getBoundingClientRect(); const x = r.left+r.width/2, y = r.top+r.height/2;
+  for(let i=0;i<10;i++){ const s = document.createElement("span"); s.className="fx"; s.textContent="★"; s.style.left=(x-17)+"px"; s.style.top=(y-17)+"px";
+    const ang = Math.random()*Math.PI*2, dist = 80+Math.random()*90; s.style.setProperty("--dx",Math.cos(ang)*dist+"px"); s.style.setProperty("--dy",Math.sin(ang)*dist+"px");
+    document.body.appendChild(s); setTimeout(()=>s.remove(),1050); } }
+function shake(el){ el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+/* 先生の設定のなかま（くだもの・やさい・ぜんぶ） */
+function pool(cat){ const c = cat || S.cat; return WORDS.filter(w => c==="all" || w.cat===c); }
+function cardHTML(w){ return `<span class="emo">${w.e}</span>${S.spell ? `<span class="lab en">${w.many}</span>` : ""}`; }
+
+/* 得点（班・個人） */
+function teamsOn(){ return S.teams>0; }
+function renderScores(){
+  const box = $("#scores");
+  if(!teamsOn()){ box.innerHTML = ""; return; }
+  box.innerHTML = Array.from({length:S.teams},(_,i)=>`<span class="chip ${SC.turn===i?"turn":""}" style="color:${TEAM_COLORS[i]}">${i+1}班 ${SC.pts[i]}点</span>`).join("");
+}
+function addPoint(n){ if(teamsOn()) SC.pts[SC.turn] += (n||1); else SC.solo += (n||1); save("u7-scores",SC); renderScores(); }
+function nextTurn(){ if(teamsOn()){ SC.turn = (SC.turn+1)%S.teams; save("u7-scores",SC); renderScores(); } }
+function turnLabel(){ return teamsOn() ? `<span style="color:${TEAM_COLORS[SC.turn]}">${SC.turn+1}班の番</span>` : ""; }
+
+/* 制限時間 */
+function startTimer(sec, barEl, onEnd){
+  if(!sec){ if(barEl) barEl.style.display="none"; return ()=>{}; }
+  const t0 = Date.now(); let stop = false;
+  const id = setInterval(()=>{ if(stop) return; const left = sec - (Date.now()-t0)/1000;
+    if(barEl) barEl.firstElementChild.style.width = Math.max(0,left/sec*100)+"%";
+    if(left<=0){ stop = true; clearInterval(id); onEnd(); } }, 250);
+  const off = ()=>{ stop = true; clearInterval(id); };
+  onLeave(off); return off;
+}
+function result(title, score, max, again){
+  leave();
+  const ratio = max ? score/max : 1, n = ratio>=.9?3:ratio>=.6?2:1;
+  sfx.fan(); sfx.clap();
+  app.innerHTML = `<div class="result"><div class="stars">${"★".repeat(n)}${"☆".repeat(3-n)}</div>
+    <div class="msg">${title}</div><div class="msg">${score} / ${max}</div>
+    <div class="bar" style="justify-content:center;margin-top:20px"><button class="big" id="again">もう一度</button><button class="big gray" id="toHome">ホームへ</button></div></div>`;
+  $("#again").onclick = again; $("#toHome").onclick = home;
+}
+
+/* ========== ホーム ========== */
+const GAMES = [
+  { id:"karuta", icon:"🍎🥕", name:"① ことばカルタ", sub:"聞いて、くだもの・やさいをタッチ", color:"var(--c1)", fn:()=>karutaMenu() },
+  { id:"shop",   icon:"🛒",   name:"② おみせやさん", sub:"お客さんのほしいものを、ほしい数だけわたそう", color:"var(--c2)", fn:()=>shopMenu() },
+  { id:"make",   icon:"🍨🍕", name:"③ パフェ・ピザづくり", sub:"オリジナルパフェやピザを作って、しょうかいしよう", color:"var(--c4)", fn:()=>makeMenu() },
+  { id:"memory", icon:"🃏",   name:"④ 絵とことばの神経衰弱", sub:"絵と英語のつづりのペアをさがそう", color:"var(--c3)", fn:()=>memoryMenu() }
+];
+function home(){
+  leave();
+  app.innerHTML = `<div class="menu">${GAMES.map(g=>`<button class="gbtn" data-g="${g.id}" style="background:${g.color}"><i class="emo">${g.icon}</i><b>${g.name}</b><span>${g.sub}</span></button>`).join("")}</div>
+  <p class="note" style="margin-top:16px">ことばのなかま：${S.cat==="fruit"?"くだもの":S.cat==="veg"?"やさい":"くだもの・やさい"}（${pool().length}語）　制限時間：${S.time?S.time+"秒":"なし"}　班：${S.teams?S.teams+"班":"なし"}</p>`;
+  $$(".gbtn").forEach(b=>b.onclick = ()=>{ ac(); GAMES.find(g=>g.id===b.dataset.g).fn(); });
+}
+function menuScreen(title, groups, start){
+  leave();
+  const sel = {};
+  app.innerHTML = `<div class="msg">${title}</div>` + groups.map((g,gi)=>`<div class="bar" style="justify-content:center"><b>${g.label}</b><span class="seg" data-gi="${gi}">${g.opts.map((o,oi)=>`<button data-oi="${oi}" class="${oi===(g.def||0)?"on":""}">${o[0]}</button>`).join("")}</span></div>`).join("")
+    + `<div class="bar" style="justify-content:center;margin-top:16px"><button class="big" id="go">スタート</button></div>`;
+  groups.forEach((g,gi)=> sel[g.key] = g.opts[g.def||0][1]);
+  $$(".seg").forEach(s=>s.onclick = e=>{ const b = e.target.closest("button"); if(!b) return; $$("button",s).forEach(x=>x.classList.remove("on")); b.classList.add("on"); const g = groups[s.dataset.gi]; sel[g.key] = g.opts[b.dataset.oi][1]; });
+  $("#go").onclick = ()=>{ ac(); start(sel); };
+}
+const catDef = ()=> ["all","fruit","veg"].indexOf(S.cat);
+const CAT_OPTS = [["ぜんぶ","all"],["くだもの","fruit"],["やさい","veg"]];
+
+/* ========== ① ことばカルタ ========== */
+function karutaMenu(){
+  menuScreen("① ことばカルタ", [
+    { key:"cat", label:"なかま", def:catDef(), opts:CAT_OPTS },
+    { key:"n", label:"まい数", opts:[["6まい",6],["9まい",9],["12まい",12]] },
+    { key:"mode", label:"聞き方", opts:[["ことばだけ","word"],["I want ～, please.","sent"]] }
+  ], o=>karuta(o));
+}
+function karuta(o){
+  leave();
+  const all = pool(o.cat), N = Math.min(o.n, all.length), Q = 10;
+  let q = 0, score = 0, target, tries;
+  app.innerHTML = `<div class="bar"><span class="msg grow" id="info"></span><button class="big blue" id="again">🔊 もう一度</button></div>
+    <div class="timer" id="tm"><i></i></div><div class="cards" id="cards"></div>`;
+  const cards = $("#cards");
+  const cols = ()=>{ const land = innerWidth>innerHeight; cards.style.setProperty("--cols", land ? (N===9?5:6) : (N===12?4:3)); };
+  cols(); addEventListener("resize",cols); onLeave(()=>removeEventListener("resize",cols));
+  const speak = ()=> tts(o.mode==="sent" ? `I want ${target.many}, please.` : target.many);
+  function next(){
+    if(q>=Q) return result("カルタ おしまい！", score, Q, ()=>karuta(o));
+    q++; tries = 0; target = all[rnd(all.length)];
+    const set = shuffle([target].concat(shuffle(all.filter(w=>w!==target)).slice(0,N-1)));
+    $("#info").innerHTML = `${q} / ${Q}問　${turnLabel()}`;
+    cards.innerHTML = set.map(w=>`<button class="card" data-id="${w.id}">${cardHTML(w)}</button>`).join("");
+    later(speak, 300);
+  }
+  cards.onclick = e=>{
+    const b = e.target.closest(".card"); if(!b || b.classList.contains("ng") || b.classList.contains("ok")) return;
+    if(b.dataset.id===target.id){
+      b.classList.add("ok"); sfx.ok(); sfx.clap(); starsAt(b); tts(target.many);
+      if(tries===0){ score++; addPoint(); }
+      $$(".card",cards).forEach(x=>x.disabled = true);
+      later(()=>{ nextTurn(); next(); }, 1400);
+    }else{ tries++; b.classList.add("ng"); shake(b); sfx.ng(); later(speak,500); }
+  };
+  $("#again").onclick = speak;
+  startTimer(S.time, $("#tm"), ()=>result("時間です！", score, q, ()=>karuta(o)));
+  next();
+}
+
+/* ========== ② おみせやさん ========== */
+function shopMenu(){
+  menuScreen("② おみせやさん（あなたはお店の人です）", [
+    { key:"cat", label:"お店", def:catDef(), opts:[["八百屋さん（ぜんぶ）","all"],["くだもの屋さん","fruit"],["やさい屋さん","veg"]] },
+    { key:"max", label:"数", def:1, opts:[["1〜3こ",3],["1〜5こ",5]] }
+  ], o=>shop(o));
+}
+function shop(o){
+  leave();
+  const all = pool(o.cat), Q = 5;
+  let q = 0, score = 0, want, cnt, step, picked, given, miss;
+  app.innerHTML = `<div class="bar"><span class="msg grow" id="info"></span><button class="big gray" id="hintBtn">💬 文を見る</button></div>
+    <div class="timer" id="tm"><i></i></div>
+    <div class="shop">
+      <div class="counter">
+        <div class="cust"><span class="emo" id="who">🧑</span><div class="bubble" id="bub"><span class="txt en" id="say"></span></div></div>
+        <div class="bar"><button class="big blue" id="re">🔊 もう一度</button><button class="big purple" id="howBtn" disabled>How many?</button></div>
+        <div class="basket" id="basket"><span class="note">かごに入れたもの</span></div>
+        <div class="nums" id="nums">${NUMS.slice(0,o.max).map((n,i)=>`<button data-n="${i+1}">${i+1}</button>`).join("")}</div>
+        <button class="big green" id="hereBtn" disabled>Here you are.</button>
+      </div>
+      <div class="shelf" id="shelf">${all.map(w=>`<button data-id="${w.id}">${cardHTML(w)}</button>`).join("")}</div>
+    </div>`;
+  const bub = $("#bub"), sayEl = $("#say");
+  let showText = S.sub;
+  const talk = (text, cb)=>{ sayEl.textContent = text; bub.classList.toggle("hide", !showText); tts(text, cb); };
+  $("#hintBtn").onclick = ()=>{ showText = !showText; bub.classList.toggle("hide", !showText); };
+  function setStep(s){
+    step = s;
+    $("#howBtn").disabled = s!=="how";
+    $("#nums").style.opacity = s==="num" ? 1 : .35; $$("#nums button").forEach(b=>b.disabled = s!=="num");
+    $("#hereBtn").disabled = s!=="give";
+    const hint = { item:"お客さんがほしいものを、たなから選ぼう", how:"「How many?」と聞こう（ボタンを押しながら言ってみよう）", num:"いくつほしいかな？ 数を選ぼう", give:"「Here you are.」とわたそう" }[s] || "";
+    $("#info").innerHTML = `${q} / ${Q}人目　${hint}　${turnLabel()}`;
+  }
+  function basketView(){ $("#basket").innerHTML = given ? `<span class="emo">${want.e.repeat(given)}</span>` : (picked ? `<span class="emo">${picked.e}</span><span class="note">　いくつ？</span>` : `<span class="note">かごに入れたもの</span>`); }
+  function next(){
+    if(q>=Q) return result("お店 おしまい！", score, Q, ()=>shop(o));
+    q++; miss = 0; picked = null; given = 0;
+    want = all[rnd(all.length)]; cnt = 1 + rnd(o.max);
+    $("#who").textContent = CUSTOMERS[rnd(CUSTOMERS.length)];
+    $$("#shelf button").forEach(b=>b.classList.remove("pick"));
+    basketView(); setStep("item");
+    later(()=>talk(`Hello! I want ${want.many}, please.`), 400);
+  }
+  $("#re").onclick = ()=>{ if(step==="item") talk(`I want ${want.many}, please.`); else if(step==="num"||step==="give") talk(`${cap(NUMS[cnt-1])}, please.`); else talk(`I want ${want.many}, please.`); };
+  $("#shelf").onclick = e=>{
+    const b = e.target.closest("button"); if(!b || step!=="item") return;
+    const w = W[b.dataset.id];
+    if(w===want){ picked = w; b.classList.add("pick"); sfx.ok(); tts(w.many); basketView(); setStep("how"); }
+    else { miss++; sfx.ng(); shake(b); later(()=>talk(`No, no. I want ${want.many}, please.`), 300); }
+  };
+  $("#howBtn").onclick = ()=>{ if(step!=="how") return; tts("How many?", ()=>later(()=>{ talk(`${cap(NUMS[cnt-1])}, please.`); setStep("num"); }, 200)); };
+  $("#nums").onclick = e=>{
+    const b = e.target.closest("button"); if(!b || step!=="num") return;
+    const n = +b.dataset.n;
+    if(n===cnt){ given = n; sfx.pop(); basketView(); tts(NUMS[n-1]); setStep("give"); }
+    else { miss++; sfx.ng(); shake(b); later(()=>talk(`${cap(NUMS[cnt-1])}, please.`), 300); }
+  };
+  $("#hereBtn").onclick = ()=>{
+    if(step!=="give") return; setStep("done");
+    tts("Here you are.", ()=>later(()=>{ talk("Thank you!"); sfx.bell(); starsAt($("#basket"));
+      if(miss===0){ score++; addPoint(); }
+      later(()=>{ nextTurn(); next(); }, 1800); }, 200));
+  };
+  startTimer(S.time, $("#tm"), ()=>result("時間です！", score, q, ()=>shop(o)));
+  next();
+}
+
+/* ========== ③ パフェ・ピザづくり ========== */
+function makeMenu(){
+  menuScreen("③ パフェ・ピザづくり", [
+    { key:"kind", label:"作るもの", opts:[["オリジナルパフェ 🍨","parfait"],["オリジナルピザ 🍕","pizza"]] }
+  ], o=>make(o));
+}
+const PARFAIT_SVG = `<svg viewBox="0 0 100 100"><path d="M20 22 H80 L68 70 H32 Z" fill="#eaf6ff" stroke="#9cc3e6" stroke-width="1.5"/><path d="M24 34 H76" stroke="#fff" stroke-width="1"/><rect x="46" y="70" width="8" height="16" fill="#cfe6f8" stroke="#9cc3e6"/><ellipse cx="50" cy="88" rx="18" ry="4" fill="#cfe6f8" stroke="#9cc3e6"/><path d="M25 56 Q50 62 75 56 L70 68 H30 Z" fill="#fff7e6"/></svg>`;
+const PIZZA_SVG = `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="#e9b872" stroke="#c98d3e" stroke-width="2"/><circle cx="50" cy="50" r="37" fill="#e5533d"/><circle cx="50" cy="50" r="35" fill="#ffd97a" opacity=".85"/></svg>`;
+function make(o){
+  leave();
+  const isP = o.kind==="parfait";
+  const items = isP ? WORDS.filter(w=>w.cat==="fruit") : WORDS.filter(w=>["onion","mushroom","greenpepper","tomato","corn","potato","carrot","cabbage","pineapple"].includes(w.id));
+  const MAX = 10; let put = [];   // [{w,x,y}]
+  app.innerHTML = `<div class="bar"><span class="msg grow" id="info"></span><button class="big blue" id="ask">🔊 What do you want?</button></div>
+    <div class="make">
+      <div class="stage" id="stage">${isP ? PARFAIT_SVG : PIZZA_SVG}</div>
+      <div><div class="shelf" id="shelf">${items.map(w=>`<button data-id="${w.id}">${cardHTML(w)}</button>`).join("")}</div>
+        <div class="bar" style="justify-content:center;margin-top:12px"><button class="big gray" id="undo">↩ 1つもどす</button><button class="big gray" id="clear">やりなおし</button><button class="big green" id="done">かんせい！</button></div></div>
+    </div>`;
+  const stage = $("#stage");
+  const info = ()=> $("#info").innerHTML = `${isP?"パフェ":"ピザ"}にのせたいものを選ぼう（${put.length} / ${MAX}）`;
+  function spot(){ // のせる場所（パフェはグラスの中、ピザは丸の中）
+    if(isP){ const layer = put.length; const y = 60 - Math.min(layer,9)*4.2 - Math.random()*3; return { x: 34 + Math.random()*32, y }; }
+    const a = Math.random()*Math.PI*2, r = Math.sqrt(Math.random())*27; return { x: 50 + Math.cos(a)*r, y: 50 + Math.sin(a)*r };
+  }
+  function addSpan(p, anim){ const s = document.createElement("span"); s.className = "put emo" + (anim ? "" : " still"); s.textContent = p.w.e; s.style.left = p.x+"%"; s.style.top = p.y+"%"; stage.appendChild(s); }
+  function draw(){ $$(".put", stage).forEach(x=>x.remove()); put.forEach(p=>addSpan(p,false)); info(); }
+  $("#ask").onclick = ()=>tts("What do you want?");
+  $("#shelf").onclick = e=>{
+    const b = e.target.closest("button"); if(!b) return;
+    if(put.length>=MAX){ toast(`${MAX}こまでです。「かんせい！」を押そう`); return; }
+    const w = W[b.dataset.id]; const p = { w, ...spot() }; put.push(p); sfx.pop(); addSpan(p,true); info();
+    tts(`I want ${w.many}.`);
+  };
+  $("#undo").onclick = ()=>{ put.pop(); draw(); };
+  $("#clear").onclick = ()=>{ put = []; draw(); };
+  $("#done").onclick = ()=>{ if(!put.length){ toast("1つ以上のせよう"); return; } present(); };
+  function present(){
+    const kinds = [...new Set(put.map(p=>p.w))];
+    const list = kinds.map(w=>w.many);
+    const joined = list.length===1 ? list[0] : list.slice(0,-1).join(", ") + " and " + list[list.length-1];
+    const s1 = `This is my ${isP?"parfait":"pizza"}.`, s2 = `${cap(joined)}.`;
+    $$(".put", stage).forEach(x=>x.classList.add("still"));
+    const html = stage.outerHTML.replace('id="stage"','id="stage2"');
+    leave();
+    app.innerHTML = `<div class="present"><div class="msg">⭐ かんせい！ しょうかいしよう</div>${html}
+      <div class="line en">${s1}</div><div class="line en">${s2}</div>
+      <p class="note">見本を聞いて、まねして言ってみよう。友だちに見せながら、しょうかいしよう。</p>
+      <div class="bar" style="justify-content:center"><button class="big blue" id="model">🔊 見本を聞く</button><button class="big" id="again2">もう1つ作る</button><button class="big gray" id="toHome2">ホームへ</button></div></div>`;
+    sfx.fan(); sfx.clap(); addPoint(); nextTurn();
+    $("#model").onclick = ()=>tts(`${s1} ${s2}`);
+    $("#again2").onclick = ()=>make(o); $("#toHome2").onclick = home;
+    later(()=>tts(`${s1} ${s2}`), 600);
+  }
+  info();
+}
+
+/* ========== ④ 絵とことばの神経衰弱 ========== */
+function memoryMenu(){
+  menuScreen("④ 絵とことばの神経衰弱", [
+    { key:"cat", label:"なかま", def:catDef(), opts:CAT_OPTS },
+    { key:"n", label:"ペアの数", opts:[["4ペア",4],["6ペア",6],["8ペア",8]] }
+  ], o=>memory(o));
+}
+function memory(o){
+  leave();
+  const ws = shuffle(pool(o.cat)).slice(0,o.n);
+  const deck = shuffle(ws.flatMap(w=>[{w, t:"pic"},{w, t:"word"}]));
+  let open = [], lock = false, pairs = 0, moves = 0;
+  app.innerHTML = `<div class="bar"><span class="msg grow" id="info"></span></div><div class="timer" id="tm"><i></i></div><div class="cards mem" id="cards"></div>`;
+  const cards = $("#cards");
+  const cols = ()=>cards.style.setProperty("--cols", innerWidth>innerHeight ? Math.min(8, Math.ceil(deck.length/2)) : 4);
+  cols(); addEventListener("resize",cols); onLeave(()=>removeEventListener("resize",cols));
+  cards.innerHTML = deck.map((d,i)=>`<button class="card" data-i="${i}"><span class="q">?</span><span class="face">${d.t==="pic" ? `<span class="emo" style="font-size:min(13vw,72px)">${d.w.e}</span>` : `<span class="word en">${d.w.many}</span>`}</span></button>`).join("");
+  const info = ()=> $("#info").innerHTML = `見つけたペア ${pairs} / ${o.n}　${turnLabel()}`;
+  info();
+  cards.onclick = e=>{
+    const b = e.target.closest(".card"); if(!b || lock || b.classList.contains("open")) return;
+    const d = deck[b.dataset.i]; b.classList.add("open"); sfx.flip(); tts(d.w.many); open.push(b);
+    if(open.length<2) return;
+    moves++; lock = true;
+    const [x,y] = open.map(el=>deck[el.dataset.i]);
+    if(x.w===y.w && x.t!==y.t){
+      later(()=>{ open.forEach(el=>el.classList.add("done")); sfx.ok(); sfx.clap(); starsAt(open[1]); pairs++; addPoint(); open = []; lock = false; info();
+        if(pairs===o.n) later(()=>result(`ぜんぶ見つけた！（${moves}回めくった）`, o.n, o.n, ()=>memory(o)), 900); }, 500);
+    }else{
+      later(()=>{ open.forEach(el=>el.classList.remove("open")); open = []; lock = false; nextTurn(); info(); }, 1300);
+    }
+  };
+  startTimer(S.time, $("#tm"), ()=>result("時間です！", pairs, o.n, ()=>memory(o)));
+}
+
+/* ========== 先生用の設定 ========== */
+(function longPress(){
+  const b = $("#teacherBtn"), fill = $(".fill", b); let t = null, st = 0, raf = 0;
+  const reset = ()=>{ clearTimeout(t); cancelAnimationFrame(raf); fill.style.width = "0"; };
+  b.addEventListener("pointerdown", ()=>{ st = performance.now(); const loop = ()=>{ fill.style.width = Math.min(100,(performance.now()-st)/12)+"%"; raf = requestAnimationFrame(loop); }; loop(); t = setTimeout(()=>{ reset(); openSettings(); }, 1200); });
+  ["pointerup","pointerleave","pointercancel"].forEach(ev=>b.addEventListener(ev, reset));
+  b.addEventListener("click", ()=>{ if(performance.now()-st < 1100) toast("先生用は、長押しで開きます"); });
+  b.addEventListener("contextmenu", e=>e.preventDefault());
+})();
+function segHTML(name, opts, val){ return `<span class="seg" data-name="${name}">${opts.map(([l,v])=>`<button data-v="${v}" class="${String(v)===String(val)?"on":""}">${l}</button>`).join("")}</span>`; }
+function openSettings(){
+  leave();
+  const ov = document.createElement("div"); ov.className = "overlay";
+  ov.innerHTML = `<div class="sheet">
+    <div class="bar"><h2 class="grow">⚙ 先生用の設定</h2><button class="big" id="close">とじる</button></div>
+    <h3>ことば</h3>
+    <div class="bar"><b>なかま（はじめの選択）</b>${segHTML("cat",CAT_OPTS,S.cat)}</div>
+    <div class="bar"><b>絵の下のつづり</b>${segHTML("spell",[["出す",true],["出さない",false]],S.spell)}</div>
+    <div class="bar"><b>お店のお客さんの文</b>${segHTML("sub",[["はじめから見せる",true],["かくす（聞いて考える）",false]],S.sub)}</div>
+    <h3>ゲームの設定</h3>
+    <div class="bar"><b>制限時間</b>${segHTML("time",[["なし",0],["30秒",30],["60秒",60],["90秒",90],["120秒",120]],S.time)}</div>
+    <div class="bar"><b>班の数</b>${segHTML("teams",[["なし",0],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],["8",8]],S.teams)}<button class="hbtn" id="reset">得点を0にもどす</button></div>
+    <div class="bar"><b>声の速さ</b>${segHTML("rate",[["ゆっくり",0.6],["ふつう",0.8],["はやい",1]],S.rate)}<button class="hbtn" id="test">🔊 ためす</button></div>
+    <p class="note">児童の名前は入力しません。得点は班の番号で表示します。設定はこのタブレットの中だけに保存されます。</p>
+  </div>`;
+  document.body.appendChild(ov);
+  $$(".seg", ov).forEach(s=>s.onclick = e=>{ const b = e.target.closest("button"); if(!b) return; $$("button",s).forEach(x=>x.classList.remove("on")); b.classList.add("on");
+    const n = s.dataset.name, v = b.dataset.v; S[n] = n==="cat" ? v : (n==="sub"||n==="spell") ? v==="true" : Number(v);
+    if(n==="teams" && SC.turn >= S.teams){ SC.turn = 0; save("u7-scores",SC); }
+    save("u7-settings", S); renderScores(); });
+  $("#reset", ov).onclick = ()=>{ if(confirm("班の得点を0にもどしますか？")){ SC = { pts:[0,0,0,0,0,0,0,0], solo:0, turn:0 }; save("u7-scores",SC); renderScores(); } };
+  $("#test", ov).onclick = ()=>tts("What do you want? I want tomatoes, please.");
+  $("#close", ov).onclick = ()=>{ ov.remove(); home(); };
+}
+
+/* ========== はじめ ========== */
+$("#homeBtn").onclick = home;
+renderScores(); home();
+</script>
+</body>
+</html>
