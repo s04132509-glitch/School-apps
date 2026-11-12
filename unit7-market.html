@@ -40,7 +40,8 @@ main{padding:12px;max-width:1200px;margin:0 auto}
 .seg button.on{background:var(--pri);color:#fff}
 .msg{font-size:clamp(18px,3vw,26px);font-weight:800;text-align:center;margin:6px 0}
 .note{color:var(--sub);font-size:14px}
-.timer{height:12px;border-radius:6px;background:#eee;overflow:hidden;margin:4px 0 10px}
+.timer{height:24px;border-radius:8px;background:#eee;overflow:hidden;margin:4px 0 10px;position:relative}
+.timer b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:#1f2937}
 .timer i{display:block;height:100%;background:var(--blue);width:100%;transition:width .25s linear}
 .emo{font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;line-height:1}
 .en{font-family:"Century Gothic","Avenir Next","Segoe UI",Roboto,Arial,sans-serif}
@@ -137,7 +138,7 @@ const CUSTOMERS = ["🧑","👩","👨","👧","👦","👵","👴","🧒"];
 const TEAM_COLORS = ["var(--c1)","var(--c2)","var(--c3)","var(--c4)","var(--c5)","#16a3b8","#d6336c","#5c7cfa"];
 
 /* ========== 保存（設定・得点） ========== */
-const DEF = { cat:"all", time:0, teams:0, rate:0.8, sub:false, spell:true };
+const DEF = { cat:"all", time:0, teams:0, order:"seq", rate:0.8, sub:false, spell:true };
 function load(k, d){ try{ const v = localStorage.getItem(k); return v ? Object.assign({}, d, JSON.parse(v)) : Object.assign({}, d); }catch(e){ return Object.assign({}, d); } }
 function save(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 let S = load("u7-settings", DEF);
@@ -199,19 +200,55 @@ function renderScores(){
   box.innerHTML = Array.from({length:S.teams},(_,i)=>`<span class="chip ${SC.turn===i?"turn":""}" style="color:${TEAM_COLORS[i]}">${i+1}班 ${SC.pts[i]}点</span>`).join("");
 }
 function addPoint(n){ if(teamsOn()) SC.pts[SC.turn] += (n||1); else SC.solo += (n||1); save("u7-scores",SC); renderScores(); }
-function nextTurn(){ if(teamsOn()){ SC.turn = (SC.turn+1)%S.teams; save("u7-scores",SC); renderScores(); } }
+
+/* 班の順番：「1班から順番」「はじめの班をランダムに選んで順番」「毎回ランダム（どの班も同じ回数ずつ）」 */
+function newBag(){ const b = shuffle([...Array(S.teams).keys()]); if(S.teams>1 && b[0]===SC.turn) b.push(b.shift()); return b; }
+function pickNext(){
+  if(S.order==="rand"){ if(!Array.isArray(SC.bag) || !SC.bag.length || SC.bag.some(t=>t>=S.teams)) SC.bag = newBag(); return SC.bag.shift(); }
+  return (SC.turn+1)%S.teams;
+}
+function initTurns(announce){
+  if(!teamsOn()) return;
+  SC.bag = [];
+  if(S.order==="rand"){ SC.bag = shuffle([...Array(S.teams).keys()]); SC.turn = SC.bag.shift(); }
+  else SC.turn = S.order==="seqr" ? rnd(S.teams) : 0;
+  save("u7-scores",SC); renderScores();
+  if(announce) toast(`はじめは ${SC.turn+1}班 です`);
+}
+function nextTurn(){
+  if(teamsOn()){ SC.turn = pickNext(); save("u7-scores",SC); renderScores(); if(S.order==="rand") toast(`つぎは ${SC.turn+1}班！`); }
+  if(CLOCK) CLOCK.restart();
+}
 function turnLabel(){ return teamsOn() ? `<span style="color:${TEAM_COLORS[SC.turn]}">${SC.turn+1}班の番</span>` : ""; }
 
-/* 制限時間 */
-function startTimer(sec, barEl, onEnd){
-  if(!sec){ if(barEl) barEl.style.display="none"; return ()=>{}; }
-  const t0 = Date.now(); let stop = false;
-  const id = setInterval(()=>{ if(stop) return; const left = sec - (Date.now()-t0)/1000;
-    if(barEl) barEl.firstElementChild.style.width = Math.max(0,left/sec*100)+"%";
-    if(left<=0){ stop = true; clearInterval(id); onEnd(); } }, 250);
-  const off = ()=>{ stop = true; clearInterval(id); };
-  onLeave(off); return off;
+/* 制限時間：班ありのときは「班の1回の番ごと」に数える。班なしのときは「ゲーム全体」で数える */
+let CLOCK = null;
+function gameClock(barEl, h){
+  if(CLOCK) CLOCK.stop();
+  CLOCK = null;
+  if(!S.time || !barEl){ if(barEl) barEl.style.display = "none"; return null; }
+  const perTeam = teamsOn();
+  let t0 = Date.now(), running = true, dead = false;
+  const label = document.createElement("b"); barEl.appendChild(label);
+  const draw = left => { barEl.firstElementChild.style.width = Math.max(0,left/S.time*100)+"%"; label.textContent = (perTeam ? `${SC.turn+1}班の のこり ` : "のこり ") + Math.max(0,Math.ceil(left)) + "秒"; };
+  const id = setInterval(()=>{
+    if(dead || !running) return;
+    const left = S.time - (Date.now()-t0)/1000; draw(left);
+    if(left > 0) return;
+    running = false;
+    if(perTeam){ sfx.ng(); toast(`${SC.turn+1}班 時間切れ！`); if(h.onTurnEnd) h.onTurnEnd(); else nextTurn(); }
+    else { c.stop(); h.onGameEnd(); }
+  }, 200);
+  const c = {
+    stop(){ dead = true; clearInterval(id); },
+    pause(){ running = false; },
+    restart(){ if(!dead && perTeam){ t0 = Date.now(); running = true; draw(S.time); } }
+  };
+  draw(S.time);
+  CLOCK = c; onLeave(()=>{ c.stop(); if(CLOCK===c) CLOCK = null; });
+  return c;
 }
+function pauseClock(){ if(CLOCK) CLOCK.pause(); }
 function result(title, score, max, again){
   leave();
   const ratio = max ? score/max : 1, n = ratio>=.9?3:ratio>=.6?2:1;
@@ -278,12 +315,13 @@ function karuta(o){
     if(b.dataset.id===target.id){
       b.classList.add("ok"); sfx.ok(); sfx.clap(); starsAt(b); tts(target.many);
       if(tries===0){ score++; addPoint(); }
-      $$(".card",cards).forEach(x=>x.disabled = true);
+      pauseClock(); $$(".card",cards).forEach(x=>x.disabled = true);
       later(()=>{ nextTurn(); next(); }, 1400);
     }else{ tries++; b.classList.add("ng"); shake(b); sfx.ng(); later(speak,500); }
   };
   $("#again").onclick = speak;
-  startTimer(S.time, $("#tm"), ()=>result("時間です！", score, q, ()=>karuta(o)));
+  gameClock($("#tm"), { onGameEnd: ()=>result("時間です！", score, q, ()=>karuta(o)),
+    onTurnEnd: ()=>{ $$(".card",cards).forEach(x=>{ x.disabled = true; if(x.dataset.id===target.id) x.classList.add("ok"); }); tts(target.many); later(()=>{ nextTurn(); next(); }, 1500); } });
   next();
 }
 
@@ -347,12 +385,13 @@ function shop(o){
     else { miss++; sfx.ng(); shake(b); later(()=>talk(`${cap(NUMS[cnt-1])}, please.`), 300); }
   };
   $("#hereBtn").onclick = ()=>{
-    if(step!=="give") return; setStep("done");
+    if(step!=="give") return; setStep("done"); pauseClock();
     tts("Here you are.", ()=>later(()=>{ talk("Thank you!"); sfx.bell(); starsAt($("#basket"));
       if(miss===0){ score++; addPoint(); }
       later(()=>{ nextTurn(); next(); }, 1800); }, 200));
   };
-  startTimer(S.time, $("#tm"), ()=>result("時間です！", score, q, ()=>shop(o)));
+  gameClock($("#tm"), { onGameEnd: ()=>result("時間です！", score, q, ()=>shop(o)),
+    onTurnEnd: ()=>{ setStep("done"); talk("Bye!"); later(()=>{ nextTurn(); next(); }, 1600); } });
   next();
 }
 
@@ -442,10 +481,11 @@ function memory(o){
       later(()=>{ open.forEach(el=>el.classList.add("done")); sfx.ok(); sfx.clap(); starsAt(open[1]); pairs++; addPoint(); open = []; lock = false; info();
         if(pairs===o.n) later(()=>result(`ぜんぶ見つけた！（${moves}回めくった）`, o.n, o.n, ()=>memory(o)), 900); }, 500);
     }else{
-      later(()=>{ open.forEach(el=>el.classList.remove("open")); open = []; lock = false; nextTurn(); info(); }, 1300);
+      pauseClock(); later(()=>{ open.forEach(el=>el.classList.remove("open")); open = []; lock = false; nextTurn(); info(); }, 1300);
     }
   };
-  startTimer(S.time, $("#tm"), ()=>result("時間です！", pairs, o.n, ()=>memory(o)));
+  gameClock($("#tm"), { onGameEnd: ()=>result("時間です！", pairs, o.n, ()=>memory(o)),
+    onTurnEnd: ()=>{ lock = true; later(()=>{ open.forEach(el=>el.classList.remove("open")); open = []; lock = false; nextTurn(); info(); }, 900); } });
 }
 
 /* ========== 先生用の設定 ========== */
@@ -470,15 +510,17 @@ function openSettings(){
     <h3>ゲームの設定</h3>
     <div class="bar"><b>制限時間</b>${segHTML("time",[["なし",0],["30秒",30],["60秒",60],["90秒",90],["120秒",120]],S.time)}</div>
     <div class="bar"><b>班の数</b>${segHTML("teams",[["なし",0],["2",2],["3",3],["4",4],["5",5],["6",6],["7",7],["8",8]],S.teams)}<button class="hbtn" id="reset">得点を0にもどす</button></div>
+    <div class="bar"><b>班の順番</b>${segHTML("order",[["1班から順番","seq"],["はじめの班をランダム","seqr"],["毎回ランダム（どの班も同じ回数）","rand"]],S.order)}</div>
+    <p class="note">制限時間は、班があるときは「班の1回の番ごと」に数えます。時間切れになると、つぎの班の番になります。班がないときは、ゲーム全体の時間です。</p>
     <div class="bar"><b>声の速さ</b>${segHTML("rate",[["ゆっくり",0.6],["ふつう",0.8],["はやい",1]],S.rate)}<button class="hbtn" id="test">🔊 ためす</button></div>
     <p class="note">児童の名前は入力しません。得点は班の番号で表示します。設定はこのタブレットの中だけに保存されます。</p>
   </div>`;
   document.body.appendChild(ov);
   $$(".seg", ov).forEach(s=>s.onclick = e=>{ const b = e.target.closest("button"); if(!b) return; $$("button",s).forEach(x=>x.classList.remove("on")); b.classList.add("on");
-    const n = s.dataset.name, v = b.dataset.v; S[n] = n==="cat" ? v : (n==="sub"||n==="spell") ? v==="true" : Number(v);
-    if(n==="teams" && SC.turn >= S.teams){ SC.turn = 0; save("u7-scores",SC); }
+    const n = s.dataset.name, v = b.dataset.v; S[n] = n==="cat"||n==="order" ? v : (n==="sub"||n==="spell") ? v==="true" : Number(v);
+    if(n==="teams" || n==="order") initTurns(true);
     save("u7-settings", S); renderScores(); });
-  $("#reset", ov).onclick = ()=>{ if(confirm("班の得点を0にもどしますか？")){ SC = { pts:[0,0,0,0,0,0,0,0], solo:0, turn:0 }; save("u7-scores",SC); renderScores(); } };
+  $("#reset", ov).onclick = ()=>{ if(confirm("班の得点を0にもどしますか？")){ SC = { pts:[0,0,0,0,0,0,0,0], solo:0, turn:0 }; save("u7-scores",SC); initTurns(true); renderScores(); } };
   $("#test", ov).onclick = ()=>tts("What do you want? I want tomatoes, please.");
   $("#close", ov).onclick = ()=>{ ov.remove(); home(); };
 }
