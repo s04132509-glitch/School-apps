@@ -87,6 +87,16 @@ input[type=range]{width:100%;accent-color:var(--shu)}
 .logo{font-family:'Shippori Mincho',serif;font-weight:800;font-size:clamp(2rem,7vw,3.2rem);letter-spacing:.08em;margin:0;color:var(--ink);text-shadow:2px 2px 0 #fff}
 .logo span{color:var(--shu)}
 .sub{margin:4px 0 0;color:var(--ink-soft);font-weight:700}
+/* 学年・組・番号の入力画面 */
+.login-card{max-width:560px;margin:10px auto 0;text-align:center}
+.login-sel{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin:12px 0 18px;font-weight:900;font-size:1.2rem}
+.login-sel select{font-size:1.3rem;font-weight:900;padding:10px 12px;border-width:3px}
+.profiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
+.profiles .pf{display:inline-flex;align-items:center;background:#fff;border:2px solid var(--line);border-radius:999px;overflow:hidden}
+.profiles .pf button{background:transparent;padding:8px 12px;font-weight:900;color:var(--ink)}
+.profiles .pf.last{border-color:var(--matcha);background:#eef8e8}
+.profiles .pf .del{padding:8px 10px;color:var(--ink-soft);border-left:1px solid var(--line);font-size:.8rem}
+.me-chip{display:inline-flex;align-items:center;gap:8px;background:var(--paper);border:2px solid var(--line);border-radius:999px;padding:6px 8px 6px 14px;font-weight:900;box-shadow:var(--shadow)}
 .player-strip{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
 .goal{max-width:520px;margin:12px auto 18px;background:var(--paper);border-radius:999px;padding:8px 16px;border:1px solid var(--line);box-shadow:var(--shadow);font-weight:700;font-size:.9rem}
 .goal .bar{height:12px;border-radius:999px;background:#eadfca;overflow:hidden;margin-top:6px}
@@ -266,15 +276,36 @@ footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
 <body>
 <div class="wrap">
 
+<!-- ================= 学年・組・番号の入力 ================= -->
+<section id="login" class="screen active">
+  <div class="hero">
+    <h1 class="logo">百人一首<br><span>かるた</span>道場</h1>
+    <p class="sub">CPUのライバルと対戦しながら、100首をおぼえよう！</p>
+  </div>
+  <div class="panel login-card">
+    <h3 style="justify-content:center">🎒 学年・組・番号をえらんでね</h3>
+    <div class="login-sel">
+      <select id="lgGrade" aria-label="学年"><option value="4">4</option><option value="5">5</option><option value="6">6</option></select>年
+      <select id="lgKumi" aria-label="組"></select>組
+      <select id="lgNo" aria-label="出席番号"></select>番
+    </div>
+    <button class="btn shu big" id="loginBtn">スタート！</button>
+    <p class="note">名前は入れません。記録は この端末の中に、学年・組・番号ごとに分けて保存されます。<br>タブやブラウザを閉じても、電源を切っても残ります。</p>
+    <div id="profileBox" style="margin-top:16px">
+      <div class="note" style="font-weight:900">この端末で使ったことのある人（おすとすぐ始められます）</div>
+      <div class="profiles" id="profileList"></div>
+    </div>
+  </div>
+</section>
+
 <!-- ================= ホーム ================= -->
-<section id="home" class="screen active">
+<section id="home" class="screen">
   <div class="hero">
     <h1 class="logo">百人一首<br><span>かるた</span>道場</h1>
     <p class="sub">CPUのライバルと対戦しながら、100首をおぼえよう！</p>
   </div>
   <div class="player-strip">
-    <span style="font-size:1.6rem">🧒</span>
-    <select id="gradeSelect" aria-label="学年"></select>
+    <span class="me-chip">🧒 <span id="meLabel"></span><button class="btn ghost small" id="switchUser">交代する</button></span>
     <button class="btn ghost small" id="openSettings">⚙️ 設定</button>
   </div>
   <div class="goal">
@@ -289,7 +320,7 @@ footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
     <button data-go="zukan"><span class="ic" style="background:#e6f3df">📖</span><span><b>百首ずかん</b><small>100首の意味・作者・決まり字</small></span></button>
   </div>
   <div class="rivals" id="rivalsMini"></div>
-  <footer>記録は この端末のブラウザに保存されます。<br><a href="./" style="color:inherit">← 学習アプリの一覧へ</a></footer>
+  <footer>記録は この端末のブラウザに、学年・組・番号ごとに保存されます。<br><a href="./" style="color:inherit">← 学習アプリの一覧へ</a></footer>
 </section>
 
 <!-- ================= 準備画面 ================= -->
@@ -407,7 +438,7 @@ footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
   </div>
   <div class="panel"><h3>🎌 ライバルとの対戦成績</h3><div class="plist" id="cpuRecList"></div></div>
   <div class="panel"><h3>🕒 さいきんの記録</h3><div class="plist" id="histList"></div></div>
-  <div style="text-align:center"><button class="btn ghost small" id="resetData">🗑️ 記録をすべて消す</button></div>
+  <div style="text-align:center"><button class="btn ghost small" id="resetData">🗑️ 自分の記録をすべて消す</button></div>
 </section>
 
 <!-- ================= 図鑑 ================= -->
@@ -642,11 +673,48 @@ function defaultSettings(){
   return s;
 }
 let DB={s:defaultSettings(),st:{},h:[],cr:{}};
-function load(){
-  try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); DB.s=Object.assign(defaultSettings(),d.s||{}); DB.st=d.st||{}; DB.h=d.h||[]; DB.cr=d.cr||{}; } }catch(e){}
-  if(!GRADES.some(g=>g.id===DB.s.grade)) DB.s.grade=GRADES[0].id;
+/* 記録は「学年-組-番号」ごとに別々に保存する（例：4-1-12） */
+let PID=null;
+const PKEY=KEY+':profiles';
+const pidKey=pid=>KEY+':'+pid;
+const pidLabel=pid=>{ const [g,k,n]=pid.split('-'); return `${g}年${k}組 ${n}番`; };
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function getProfiles(){ try{ const d=JSON.parse(lsGet(PKEY)||'{}'); return {list:Array.isArray(d.list)?d.list:[],last:d.last||null}; }catch(e){ return {list:[],last:null}; } }
+function setProfiles(p){ lsSet(PKEY,JSON.stringify(p)); }
+function pidSort(a,b){ const x=a.split('-').map(Number), y=b.split('-').map(Number); return x[0]-y[0]||x[1]-y[1]||x[2]-y[2]; }
+function login(pid){
+  const raw=lsGet(pidKey(pid));
+  DB={s:defaultSettings(),st:{},h:[],cr:{}};
+  const gid='e'+pid.split('-')[0];
+  if(raw){
+    try{ const d=JSON.parse(raw); DB.s=Object.assign(defaultSettings(),d.s||{}); DB.st=d.st||{}; DB.h=d.h||[]; DB.cr=d.cr||{}; }catch(e){}
+    DB.s.grade=gid;
+  }else{
+    // はじめての人：学年に合わせたおすすめ設定にする
+    DB.s.grade=gid; applyGradePreset();
+    // 前の版（1人用）の記録がこの端末に残っていたら、引きつぐか聞く
+    const old=lsGet(KEY);
+    if(old && confirm('この端末に、前の版の記録が残っています。\n'+pidLabel(pid)+'の記録として引きつぎますか？\n（「キャンセル」にすると、前の記録は使いません）')){
+      try{ const d=JSON.parse(old); DB.st=d.st||{}; DB.h=d.h||[]; DB.cr=d.cr||{}; }catch(e){}
+      lsDel(KEY);
+    }
+  }
+  PID=pid;
+  const p=getProfiles(); if(!p.list.includes(pid)) p.list.push(pid); p.list.sort(pidSort); p.last=pid; setProfiles(p);
+  save(); applyRuby(); show('home');
 }
-function save(){ try{ localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){} }
+function logout(){ PID=null; DB={s:defaultSettings(),st:{},h:[],cr:{}}; renderLogin(); show('login'); }
+function save(){ if(!PID) return; if(!lsSet(pidKey(PID),JSON.stringify(DB))) toast('記録を保存できませんでした（ブラウザの設定を確認してください）'); }
+function renderLogin(){
+  $('#lgKumi').innerHTML=range(1,10).map(i=>`<option value="${i}">${i}</option>`).join('');
+  $('#lgNo').innerHTML=range(1,45).map(i=>`<option value="${i}">${i}</option>`).join('');
+  const p=getProfiles();
+  if(p.last){ const [g,k,n]=p.last.split('-'); $('#lgGrade').value=g; $('#lgKumi').value=k; $('#lgNo').value=n; }
+  $('#profileBox').style.display=p.list.length?'':'none';
+  $('#profileList').innerHTML=p.list.map(pid=>`<span class="pf ${pid===p.last?'last':''}"><button data-pid="${pid}">${pidLabel(pid)}</button><button class="del" data-delpid="${pid}" title="この人の記録を消す">✕</button></span>`).join('');
+}
 const S=()=>DB.s;
 
 function applyGradePreset(){
@@ -761,8 +829,7 @@ function playerName(){ return 'あなた'; }
 /* ホーム */
 function renderHome(){
   const s=S(), g=gradeOf(s.grade);
-  $('#gradeSelect').innerHTML=GRADES.map(x=>`<option value="${x.id}">${x.label}</option>`).join('');
-  $('#gradeSelect').value=s.grade;
+  $('#meLabel').textContent=PID?pidLabel(PID):'';
   const learned=POEMS.filter(p=>mastery(p.id)===3).length;
   $('#goalText').innerHTML=`🎯 ${g.label}の目標：おぼえた句 <b style="color:var(--matcha)">${learned}</b> / ${g.goal} 首 ${learned>=g.goal?'🎉 たっせい！':''}`;
   $('#goalBar').style.width=Math.min(100,learned/g.goal*100)+'%';
@@ -1110,12 +1177,14 @@ function showSheet(p,msg,cls,isKara){
     <div style="text-align:center"><span class="chip kima">決まり字「${p.kima}」</span>${isKara?'':`<span class="chip" style="background:${M_COLOR[m]};color:#3a2f22">${M_LABEL[m]}</span>`}${st&&st.seen?`<span class="chip">正解率 ${Math.round(st.win/st.seen*100)}%</span>`:''}</div>
     <div class="meaning">💡 <b>意味</b>：${esc(p.meaning)}</div>
     <div class="actions">
+      <button class="btn ghost small" id="sheetQuit">🏳️ やめる</button>
       <button class="btn ghost small" id="sheetListen">🔊 もう一度聞く</button>
       <button class="btn shu" id="nextBtn">${last?'けっかを見る 🏁':'つぎへ ▶'}</button>
     </div>`;
   $('#sheet').classList.add('show');
   $('#nextBtn').onclick=()=>{ stopSpeak(); nextRound(); };
   $('#sheetListen').onclick=()=>speak(poemSpeech(p,true));
+  $('#sheetQuit').onclick=quitGame;
 }
 function hideSheet(){ $('#sheet').classList.remove('show'); }
 
@@ -1253,11 +1322,15 @@ function bind(){
   $('#againBtn').addEventListener('click',()=>openSetup(MODE));
   $('#reviewTrain').addEventListener('click',()=>{ if(!G||!G.review) return; S().custom=G.review.slice().sort((a,b)=>a-b); S().poolMode='custom'; save(); openSetup('train'); });
   $('#weakTrain').addEventListener('click',()=>{ if(!DB._weak||!DB._weak.length) return; S().custom=DB._weak.slice().sort((a,b)=>a-b); S().poolMode='custom'; save(); openSetup('train'); });
-  $('#resetData').addEventListener('click',()=>{ if(confirm('これまでの記録（成績・対戦成績）をすべて消します。よろしいですか？')){ DB.st={}; DB.h=[]; DB.cr={}; save(); renderStats(); toast('記録を消しました'); } });
+  $('#resetData').addEventListener('click',()=>{ if(confirm(`${pidLabel(PID)}の記録（成績・対戦成績）をすべて消します。よろしいですか？`)){ DB.st={}; DB.h=[]; DB.cr={}; save(); renderStats(); toast('記録を消しました'); } });
   // ホーム
-  $('#gradeSelect').addEventListener('change',e=>{ S().grade=e.target.value; save();
-    if(confirm(`${gradeOf(e.target.value).label}のおすすめ設定（CPUの時間・札の数など）にしますか？`)){ applyGradePreset(); toast('おすすめ設定にしました'); }
-    renderHome(); });
+  $('#switchUser').addEventListener('click',()=>{ if(confirm(`${pidLabel(PID)}の記録を保存して、ほかの人と交代しますか？`)) logout(); });
+  $('#loginBtn').addEventListener('click',()=>{ unlockSpeech(); login(`${$('#lgGrade').value}-${$('#lgKumi').value}-${$('#lgNo').value}`); });
+  $('#profileList').addEventListener('click',e=>{
+    const d=e.target.closest('[data-delpid]');
+    if(d){ const pid=d.dataset.delpid; if(confirm(`${pidLabel(pid)}の記録を この端末から消します。もとにはもどせません。よろしいですか？`)){ lsDel(pidKey(pid)); const p=getProfiles(); p.list=p.list.filter(x=>x!==pid); if(p.last===pid) p.last=null; setProfiles(p); renderLogin(); toast('記録を消しました'); } return; }
+    const b=e.target.closest('[data-pid]'); if(b){ unlockSpeech(); login(b.dataset.pid); }
+  });
   $('#openSettings').addEventListener('click',()=>{ $$('#settingsModal input[data-k]').forEach(i=>i.checked=!!S()[i.dataset.k]); $('#rateRange').value=S().rate; $('#rateLabel').textContent=S().rate; loadVoices(); $('#settingsModal').classList.add('show'); });
   $('#rateRange').addEventListener('input',e=>{ S().rate=+e.target.value; $('#rateLabel').textContent=S().rate; save(); });
   $('#voiceSelect').addEventListener('change',e=>{ S().voice=e.target.value; save(); });
@@ -1280,7 +1353,7 @@ function openPicker(){ renderPicker(); $('#pickerModal').classList.add('show'); 
 /* =========================================================
    L. はじめに実行
    ========================================================= */
-load(); applyRuby(); bind(); loadVoices(); renderHome();
+applyRuby(); bind(); loadVoices(); renderLogin();
 if(POEMS.length!==100) alert('データエラー：句の数が '+POEMS.length+' 首です');
 </script>
 </body>
