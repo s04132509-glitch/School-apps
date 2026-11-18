@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>百人一首かるた道場</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/* =========================================================
+   1. デザイン設定（色・文字）
+   ========================================================= */
+:root{
+  --ink:#2b2118;
+  --ink-soft:#6b5a48;
+  --paper:#fffaf0;
+  --washi:#f4ecdc;
+  --ai:#1f3a5f;        /* 藍色 */
+  --ai-soft:#e3ebf5;
+  --shu:#c8402c;       /* 朱色 */
+  --gold:#c9a227;
+  --matcha:#4f8a3c;
+  --frame:#2f6b3a;     /* 取り札のふち */
+  --line:#e2d6bf;
+  --m0:#d9d2c5; --m1:#e57373; --m2:#f2c14e; --m3:#6cbf6c;
+  --radius:16px;
+  --shadow:0 4px 14px rgba(60,40,20,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN','Yu Gothic','Meiryo',sans-serif;
+  color:var(--ink);
+  background-color:var(--washi);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.7) 0 2px, transparent 3px),
+    radial-gradient(circle at 70% 60%, rgba(200,170,120,.12) 0 2px, transparent 3px),
+    linear-gradient(180deg,#f8f2e6 0%,#efe4cf 100%);
+  background-size:38px 38px, 53px 53px, 100% 100%;
+  background-attachment:fixed;
+  min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+}
+.mincho{font-family:'Shippori Mincho','Hiragino Mincho ProN','Yu Mincho',serif}
+button{font-family:inherit;cursor:pointer;border:none}
+button:disabled{opacity:.45;cursor:not-allowed}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 40px}
+.screen{display:none;animation:fadeIn .35s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* ふりがな */
+ruby rt{font-size:.5em;color:var(--ink-soft);font-weight:500;font-family:'Zen Maru Gothic',sans-serif}
+body.noruby rt{display:none}
+
+/* 共通パーツ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;border-radius:999px;font-size:1rem;font-weight:700;background:var(--ai);color:#fff;box-shadow:0 3px 0 #0f2238;transition:transform .08s}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 #0f2238}
+.btn.shu{background:var(--shu);box-shadow:0 3px 0 #8a2615}
+.btn.ghost{background:#fff;color:var(--ai);box-shadow:0 3px 0 #c9bfae;border:2px solid var(--line)}
+.btn.big{font-size:1.2rem;padding:16px 34px}
+.btn.small{font-size:.85rem;padding:8px 14px}
+.panel{background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px;border:1px solid var(--line)}
+.panel h3{margin:0 0 12px;font-size:1.05rem;color:var(--ai);display:flex;align-items:center;gap:8px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.topbar h2{margin:0;font-size:1.3rem;color:var(--ai)}
+.seg{display:inline-flex;background:#efe6d4;border-radius:999px;padding:4px;gap:4px;flex-wrap:wrap}
+.seg button{padding:8px 16px;border-radius:999px;background:transparent;font-weight:700;color:var(--ink-soft);font-size:.95rem}
+.seg button.on{background:var(--ai);color:#fff}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note{font-size:.85rem;color:var(--ink-soft);margin:6px 0 0}
+.switch{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line);font-weight:700}
+.switch:last-child{border-bottom:none}
+.switch small{display:block;font-weight:500;color:var(--ink-soft);font-size:.8rem}
+.switch input{appearance:none;-webkit-appearance:none;width:52px;height:30px;border-radius:999px;background:#d7ccb8;position:relative;flex:none;cursor:pointer;transition:background .2s}
+.switch input::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}
+.switch input:checked{background:var(--matcha)}
+.switch input:checked::after{left:25px}
+select,input[type=text],input[type=search]{font-family:inherit;font-size:1rem;padding:9px 12px;border-radius:10px;border:2px solid var(--line);background:#fff;color:var(--ink)}
+input[type=range]{width:100%;accent-color:var(--shu)}
+
+/* =========================================================
+   2. ホーム画面
+   ========================================================= */
+.hero{text-align:center;padding:18px 0 6px}
+.logo{font-family:'Shippori Mincho',serif;font-weight:800;font-size:clamp(2rem,7vw,3.2rem);letter-spacing:.08em;margin:0;color:var(--ink);text-shadow:2px 2px 0 #fff}
+.logo span{color:var(--shu)}
+.sub{margin:4px 0 0;color:var(--ink-soft);font-weight:700}
+.player-strip{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin:16px 0 4px}
+.goal{max-width:520px;margin:12px auto 18px;background:var(--paper);border-radius:999px;padding:8px 16px;border:1px solid var(--line);box-shadow:var(--shadow);font-weight:700;font-size:.9rem}
+.goal .bar{height:12px;border-radius:999px;background:#eadfca;overflow:hidden;margin-top:6px}
+.goal .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--matcha),#9ad06f);border-radius:999px;transition:width .6s}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:10px}
+.menu button{background:var(--paper);border-radius:20px;padding:18px 16px;text-align:left;box-shadow:0 5px 0 #d8c9ad,var(--shadow);border:2px solid var(--line);display:flex;gap:14px;align-items:center;transition:transform .1s}
+.menu button:hover{transform:translateY(-2px)}
+.menu button:active{transform:translateY(3px);box-shadow:0 2px 0 #d8c9ad}
+.menu .ic{font-size:2.2rem;width:56px;height:56px;border-radius:16px;display:grid;place-items:center;flex:none}
+.menu b{display:block;font-size:1.15rem;color:var(--ink)}
+.menu small{color:var(--ink-soft);font-size:.82rem;font-weight:500}
+.menu .main{grid-column:1/-1;background:linear-gradient(135deg,#1f3a5f,#2f5785);color:#fff;border-color:#1f3a5f;box-shadow:0 5px 0 #0f2238,var(--shadow)}
+.menu .main b{color:#fff;font-size:1.35rem}
+.menu .main small{color:#d6e2f2}
+.rivals{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.rivals .mini{font-size:1.6rem;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;box-shadow:var(--shadow);border:3px solid #fff}
+
+/* =========================================================
+   3. CPUキャラクター
+   ========================================================= */
+.cpu-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.cpu-card{position:relative;background:#fff;border-radius:18px;padding:14px 12px 12px;text-align:center;border:3px solid var(--line);cursor:pointer;transition:transform .12s,border-color .12s}
+.cpu-card:hover{transform:translateY(-2px)}
+.cpu-card.on{border-color:var(--shu);box-shadow:0 0 0 4px rgba(200,64,44,.15)}
+.avatar{width:76px;height:76px;margin:0 auto 6px;border-radius:50%;display:grid;place-items:center;font-size:2.7rem;border:4px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.18);position:relative}
+.cpu-card .lv{position:absolute;top:8px;left:8px;background:var(--ink);color:#fff;font-size:.7rem;padding:2px 8px;border-radius:999px;font-weight:900}
+.cpu-card .medal{position:absolute;top:6px;right:8px;font-size:1.2rem}
+.cpu-card .nm{font-weight:900;font-size:1.1rem}
+.cpu-card .tt{font-size:.75rem;color:var(--ink-soft)}
+.cpu-card .stars{color:var(--gold);letter-spacing:1px;font-size:.9rem}
+.cpu-card .rec{font-size:.72rem;color:var(--ink-soft)}
+.cpu-card .tm{margin-top:8px;font-size:.8rem;font-weight:700;text-align:left}
+.cpu-card .tm span{float:right;color:var(--shu)}
+
+/* =========================================================
+   4. 対戦画面
+   ========================================================= */
+.score-board{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;background:var(--paper);border-radius:var(--radius);padding:10px 12px;box-shadow:var(--shadow);border:1px solid var(--line);position:relative}
+.side{display:flex;align-items:center;gap:10px;min-width:0}
+.side.r{flex-direction:row-reverse;text-align:right}
+.side .avatar{width:52px;height:52px;font-size:1.8rem;margin:0;border-width:3px;flex:none}
+.side .who{min-width:0}
+.side .who b{display:block;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side .pts{font-size:1.9rem;font-weight:900;line-height:1;color:var(--ai)}
+.side.r .pts{color:var(--shu)}
+.round-info{text-align:center;font-weight:900;color:var(--ink-soft);font-size:.85rem;line-height:1.3}
+.round-info big{display:block;font-size:1.3rem;color:var(--ink)}
+.bubble{position:absolute;right:10px;top:100%;margin-top:8px;background:#fff;border:2px solid var(--ink);border-radius:14px;padding:6px 12px;font-weight:700;font-size:.9rem;z-index:5;white-space:nowrap;opacity:0;transform:translateY(-4px) scale(.95);transition:all .2s;pointer-events:none}
+.bubble::before{content:"";position:absolute;top:-9px;right:26px;border:8px solid transparent;border-bottom-color:var(--ink);border-top:none}
+.bubble.show{opacity:1;transform:none}
+.pulse{animation:pulse .5s ease}
+@keyframes pulse{50%{transform:scale(1.18)}}
+
+.reader{margin:14px 0 10px;background:#fffdf7;border-radius:var(--radius);border:2px solid var(--line);padding:12px 16px;min-height:118px;position:relative;box-shadow:inset 0 0 0 4px #f6efdf}
+.reader .lbl{position:absolute;top:-11px;left:14px;background:var(--ai);color:#fff;font-size:.75rem;font-weight:900;padding:2px 10px;border-radius:999px}
+.reader .lbl.kara{background:var(--ink-soft)}
+.read-text{font-family:'Shippori Mincho',serif;font-weight:700;font-size:clamp(1.1rem,3.6vw,1.6rem);line-height:2.1;text-align:center;padding-top:6px}
+.read-text .ln{display:inline-block;margin:0 .4em}
+.read-text .sep{display:block;height:2px;margin:2px auto;width:40%;background:linear-gradient(90deg,transparent,var(--line),transparent)}
+.read-text .shimo-part{color:var(--ink-soft)}
+.tk{transition:opacity .15s}
+.tk.wait{visibility:hidden;opacity:0}
+.tk.kima{color:var(--shu);background:linear-gradient(transparent 70%,rgba(200,64,44,.18) 70%)}
+.read-text.big{font-size:clamp(2rem,9vw,3.4rem);letter-spacing:.15em}
+.listen{color:var(--ink-soft);font-size:1.1rem;text-align:center;padding-top:22px;font-weight:700}
+.listen .wave{display:inline-block;animation:wave 1s infinite}
+@keyframes wave{50%{transform:scale(1.25)}}
+.tbar{height:10px;border-radius:999px;background:#eadfca;overflow:hidden;margin:6px 0 4px}
+.tbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--shu),#f08a5d);border-radius:999px}
+.tbar-label{font-size:.75rem;color:var(--ink-soft);font-weight:700;text-align:right}
+
+/* 取り札 */
+.field{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:14px 4px;margin-top:4px;background:rgba(150,110,60,.08);border-radius:var(--radius);min-height:160px}
+.card{position:relative;flex:none;aspect-ratio:52/73;background:linear-gradient(160deg,#fffef8,#f7efdc);border:5px solid var(--frame);border-radius:8px;box-shadow:0 4px 0 #1c4424,0 6px 12px rgba(0,0,0,.18);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .12s,box-shadow .12s,opacity .3s;user-select:none;-webkit-user-select:none;outline:1px solid #e8dcc0;outline-offset:-9px}
+.card:hover{transform:translateY(-3px)}
+.card:active{transform:translateY(1px)}
+.card .ctext{writing-mode:vertical-rl;-webkit-writing-mode:vertical-rl;text-orientation:upright;font-family:'Shippori Mincho',serif;font-weight:800;font-size:var(--cfs,18px);line-height:1.75;color:#1d150e;display:flex;flex-direction:column;gap:.15em}
+body:not(.noruby) .card .ctext{line-height:2.05}
+.card .ctext .cl:last-child{padding-top:1.2em}
+.card .num{position:absolute;left:4px;bottom:2px;font-size:.62rem;color:#b3a283;font-weight:900;font-family:'Zen Maru Gothic',sans-serif}
+.card.me{background:linear-gradient(160deg,#e6f6e0,#c9ecbd);animation:takeMe .5s ease}
+.card.cpu{background:linear-gradient(160deg,#fde4dc,#f6c3b6);animation:takeCpu .5s ease}
+.card.answer{box-shadow:0 0 0 4px var(--gold),0 4px 0 #1c4424}
+.card.wrong{animation:shake .4s}
+.card.wrong-mark{background:linear-gradient(160deg,#ffe0e0,#ffc8c8)}
+.card.fade{opacity:.35}
+.card .tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.72rem;font-weight:900;color:#fff;padding:2px 8px;border-radius:999px;background:var(--matcha);z-index:2}
+.card .tag.cpu{background:var(--shu)}
+.card .tag.miss{background:#7a6a58}
+@keyframes takeMe{0%{transform:scale(1)}40%{transform:scale(1.12) rotate(-3deg)}100%{transform:scale(1)}}
+@keyframes takeCpu{0%{transform:scale(1)}40%{transform:scale(1.12) rotate(3deg)}100%{transform:scale(1)}}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+.game-tools{display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:8px;flex-wrap:wrap}
+.flash{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);font-size:clamp(2rem,9vw,4rem);font-weight:900;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.25),0 0 20px rgba(0,0,0,.2);pointer-events:none;opacity:0;z-index:60;white-space:nowrap;font-family:'Shippori Mincho',serif}
+.flash.go{animation:flash 1s ease forwards}
+@keyframes flash{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}70%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
+
+/* 結果シート（1枚ごとの解説） */
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:40;transform:translateY(105%);visibility:hidden;transition:transform .35s cubic-bezier(.2,.8,.2,1),visibility 0s .35s;padding:0 10px env(safe-area-inset-bottom)}
+.sheet.show{transform:none;visibility:visible;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.sheet-in{max-width:760px;margin:0 auto;background:var(--paper);border-radius:22px 22px 0 0;box-shadow:0 -6px 24px rgba(0,0,0,.2);border:2px solid var(--line);border-bottom:none;padding:16px 18px 16px;max-height:62vh;overflow:auto}
+.rp-msg{font-size:1.35rem;font-weight:900;text-align:center;margin-bottom:6px}
+.rp-msg.good{color:var(--matcha)} .rp-msg.bad{color:var(--shu)} .rp-msg.neutral{color:var(--ink-soft)}
+.rp-meta{text-align:center;font-size:.85rem;color:var(--ink-soft);font-weight:700}
+.poem-full{font-family:'Shippori Mincho',serif;font-weight:700;text-align:center;font-size:1.15rem;line-height:2.1;margin:6px 0}
+.poem-full .s{color:var(--ai)}
+.chip{display:inline-block;font-size:.78rem;font-weight:900;padding:2px 10px;border-radius:999px;background:var(--ai-soft);color:var(--ai);margin:2px}
+.chip.kima{background:#fde8e3;color:var(--shu)}
+.meaning{background:#fff;border-radius:12px;padding:10px 12px;border-left:5px solid var(--gold);font-size:.95rem;line-height:1.7;margin:8px 0}
+.sheet .actions{display:flex;justify-content:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+
+/* =========================================================
+   5. 結果・成績・図鑑
+   ========================================================= */
+.result-hero{text-align:center;padding:10px 0}
+.result-hero .big{font-family:'Shippori Mincho',serif;font-size:clamp(2.4rem,10vw,4rem);font-weight:800;margin:0}
+.result-hero .big.win{color:var(--shu)} .result-hero .big.lose{color:var(--ai)}
+.vs-score{font-size:2.2rem;font-weight:900;margin:6px 0}
+.rank{display:inline-grid;place-items:center;width:96px;height:96px;border-radius:50%;font-size:3rem;font-weight:900;color:#fff;background:conic-gradient(var(--gold),#f3d56b,var(--gold));box-shadow:0 0 0 6px #fff,var(--shadow);font-family:'Shippori Mincho',serif}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.kpi{background:#fff;border-radius:14px;padding:12px;text-align:center;border:1px solid var(--line)}
+.kpi b{display:block;font-size:1.6rem;color:var(--ai)}
+.kpi small{color:var(--ink-soft);font-weight:700;font-size:.78rem}
+.plist{display:flex;flex-direction:column;gap:8px}
+.pitem{background:#fff;border-radius:12px;border:1px solid var(--line);padding:10px 12px;display:flex;gap:10px;align-items:center}
+.pitem .no{flex:none;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:900;color:#fff;font-size:.95rem}
+.pitem .tx{flex:1;min-width:0;font-family:'Shippori Mincho',serif;font-weight:700;line-height:1.9;font-size:.98rem}
+.pitem .st{flex:none;text-align:right;font-size:.75rem;color:var(--ink-soft);font-weight:700;line-height:1.5}
+.grid100{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.grid100 button{aspect-ratio:1;border-radius:6px;font-size:.72rem;font-weight:900;color:#3a2f22;background:var(--m0);padding:0}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.8rem;font-weight:700;margin-top:10px;color:var(--ink-soft)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.zitem{background:#fff;border-radius:16px;border:1px solid var(--line);padding:14px 16px;margin-bottom:10px}
+.zitem .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:900}
+.zitem .hd .no{background:var(--ink);color:#fff;border-radius:8px;padding:2px 8px;font-size:.85rem}
+.zitem .au{font-size:.85rem;color:var(--ink-soft);font-weight:700}
+.zitem .poem-full{text-align:left;font-size:1.15rem}
+.badge{font-size:.72rem;font-weight:900;padding:2px 8px;border-radius:999px;color:#3a2f22}
+.zstat{font-size:.8rem;color:var(--ink-soft);font-weight:700}
+
+/* モーダル */
+.modal{position:fixed;inset:0;background:rgba(30,20,10,.55);display:none;align-items:center;justify-content:center;z-index:80;padding:14px}
+.modal.show{display:flex}
+.modal-in{background:var(--paper);border-radius:20px;width:100%;max-width:720px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 10px 40px rgba(0,0,0,.3);overflow:hidden}
+.modal-hd{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:900;color:var(--ai);font-size:1.1rem}
+.modal-bd{padding:14px 18px;overflow:auto}
+.modal-ft{padding:12px 18px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.pick-grid label{display:flex;gap:6px;align-items:center;background:#fff;border:2px solid var(--line);border-radius:10px;padding:6px 8px;font-size:.85rem;cursor:pointer;font-weight:700}
+.pick-grid label.on{border-color:var(--matcha);background:#eef8e8}
+.pick-grid input{accent-color:var(--matcha)}
+.pick-grid .n{color:var(--ink-soft);font-size:.75rem;width:24px;flex:none}
+.quick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.quick button{background:#efe6d4;border-radius:999px;padding:6px 12px;font-size:.8rem;font-weight:700;color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(30px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-weight:700;opacity:0;transition:all .3s;z-index:99;pointer-events:none;font-size:.9rem;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.countdown{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(31,58,95,.25);z-index:70;flex-direction:column}
+.countdown.show{display:flex}
+.countdown b{font-size:6rem;color:#fff;font-family:'Shippori Mincho',serif;text-shadow:0 4px 0 rgba(0,0,0,.3);animation:pop .9s ease infinite}
+.countdown p{color:#fff;font-weight:900;font-size:1.1rem;text-shadow:0 2px 0 rgba(0,0,0,.3);margin:0}
+@keyframes pop{0%{transform:scale(1.4);opacity:0}30%{transform:scale(1);opacity:1}}
+footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
+@media (max-width:600px){
+  .wrap{padding:12px 12px 30px}
+  .panel{padding:14px}
+  .side .avatar{width:42px;height:42px;font-size:1.45rem}
+  .side .pts{font-size:1.5rem}
+  .menu{grid-template-columns:1fr 1fr}
+  .menu button{flex-direction:column;text-align:center;gap:6px;padding:14px 8px}
+  .menu .main{flex-direction:row;text-align:left}
+  .grid100{gap:3px}
+  .grid100 button{font-size:.6rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ================= ホーム ================= -->
+<section id="home" class="screen active">
+  <div class="hero">
+    <h1 class="logo">百人一首<br><span>かるた</span>道場</h1>
+    <p class="sub">CPUのライバルと対戦しながら、100首をおぼえよう！</p>
+  </div>
+  <div class="player-strip">
+    <span style="font-size:1.6rem">🧒</span>
+    <select id="gradeSelect" aria-label="学年"></select>
+    <button class="btn ghost small" id="openSettings">⚙️ 設定</button>
+  </div>
+  <div class="goal">
+    <div id="goalText">目標：おぼえた句 0 / 20 首</div>
+    <div class="bar"><i id="goalBar" style="width:0%"></i></div>
+  </div>
+  <div class="menu">
+    <button class="main" data-mode="vs"><span class="ic" style="background:rgba(255,255,255,.15)">⚔️</span><span><b>CPUと対戦</b><small>ライバルを選んで、かるた勝負！</small></span></button>
+    <button data-mode="train"><span class="ic" style="background:#fde8e3">🔥</span><span><b>にがて特訓</b><small>にがてな句が多く出る ひとり練習</small></span></button>
+    <button data-mode="kima"><span class="ic" style="background:#fff3cc">⚡</span><span><b>決まり字道場</b><small>最初の数文字で札を取る練習</small></span></button>
+    <button data-go="stats"><span class="ic" style="background:#e3ebf5">📊</span><span><b>せいせき</b><small>にがてな句ランキング・記録</small></span></button>
+    <button data-go="zukan"><span class="ic" style="background:#e6f3df">📖</span><span><b>百首ずかん</b><small>100首の意味・作者・決まり字</small></span></button>
+  </div>
+  <div class="rivals" id="rivalsMini"></div>
+  <footer>記録は この端末のブラウザに保存されます。<br><a href="./" style="color:inherit">← 学習アプリの一覧へ</a></footer>
+</section>
+
+<!-- ================= 準備画面 ================= -->
+<section id="setup" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" data-go="home">← もどる</button>
+    <h2 id="setupTitle">対戦の準備</h2>
+    <span></span>
+  </div>
+  <div class="panel" id="cpuPanel">
+    <h3>🎌 対戦あいてを選ぼう</h3>
+    <div class="cpu-list" id="cpuList"></div>
+    <p class="note">スライダーで「CPUが札を取るまでの時間」をレベルごとに変えられます（読み上げが始まってからの秒数）。</p>
+  </div>
+  <div class="panel">
+    <h3>📜 出題する句</h3>
+    <div class="row">
+      <div class="seg" id="poolSeg">
+        <button data-v="all">100首すべてから</button>
+        <button data-v="custom">えらんだ句から</button>
+      </div>
+      <button class="btn ghost small" id="openPicker">句をえらぶ（<span id="customCount">0</span>首）</button>
+    </div>
+    <p class="note" id="poolNote"></p>
+  </div>
+  <div class="panel">
+    <h3>🎴 ならべる札の数</h3>
+    <div class="seg" id="cardsSeg">
+      <button data-v="3">3枚</button><button data-v="5">5枚</button><button data-v="10">10枚</button>
+    </div>
+    <h3 style="margin-top:16px">🔢 読む句の数</h3>
+    <div class="seg" id="qSeg">
+      <button data-v="10">10首</button><button data-v="20">20首</button><button data-v="50">50首</button><button data-v="100">100首</button>
+    </div>
+  </div>
+  <div class="panel" id="soloPanel">
+    <h3>⏱️ 制限時間</h3>
+    <div class="row" style="justify-content:space-between"><b id="soloTimeLabel">10.0 秒</b></div>
+    <input type="range" id="soloTime" min="2" max="20" step="0.5">
+    <p class="note">読み上げが始まってから、この時間内に取れたら正解です。</p>
+  </div>
+  <div class="panel">
+    <h3>📏 ルール</h3>
+    <label class="switch" id="swOtetsuki">おてつき<small>まちがった札をさわると −1点、その回はもう取れません</small><input type="checkbox" data-k="otetsuki"></label>
+    <label class="switch" id="swKara">空札（からふだ）<small>場にない札が読まれることがあります。さわるとおてつき！</small><input type="checkbox" data-k="karafuda"></label>
+    <label class="switch" id="swShimo">下の句まで読む<small>上の句のあとに下の句も読み上げます</small><input type="checkbox" data-k="readShimo"></label>
+    <label class="switch">読み札を画面に出す<small>オフにすると「耳だけ」で勝負します</small><input type="checkbox" data-k="showText"></label>
+    <label class="switch">決まり字ヒント<small>どの札か決まる文字を赤く光らせます</small><input type="checkbox" data-k="hint"></label>
+  </div>
+  <div style="text-align:center"><button class="btn shu big" id="startBtn">はじめる！</button></div>
+</section>
+
+<!-- ================= 対戦画面 ================= -->
+<section id="game" class="screen">
+  <div class="score-board" id="scoreBoard">
+    <div class="side">
+      <div class="avatar" id="meAvatar" style="background:linear-gradient(135deg,#bfe3ff,#7fb8ea)">🧒</div>
+      <div class="who"><b id="meName">あなた</b><div class="pts" id="mePts">0</div></div>
+    </div>
+    <div class="round-info"><big id="roundNo">1</big><span id="roundOf">/ 10 首</span></div>
+    <div class="side r" id="opSide">
+      <div class="avatar" id="opAvatar">🐶</div>
+      <div class="who"><b id="opName">ころまる</b><div class="pts" id="opPts">0</div></div>
+    </div>
+    <div class="bubble" id="bubble"></div>
+  </div>
+  <div class="reader">
+    <span class="lbl" id="readerLbl">読み札</span>
+    <div id="readArea"></div>
+  </div>
+  <div class="tbar"><i id="tbarFill"></i></div>
+  <div class="tbar-label" id="tbarLabel">&nbsp;</div>
+  <div class="field" id="field"></div>
+  <div class="game-tools">
+    <button class="btn ghost small" id="quitBtn">🏳️ やめる</button>
+    <span class="note" id="keyHint">パソコンは数字キー（1〜9・0）でも札を取れます</span>
+  </div>
+</section>
+
+<!-- ================= 結果画面 ================= -->
+<section id="result" class="screen">
+  <div class="panel result-hero" id="resultHero"></div>
+  <div class="panel"><h3>📈 今回の記録</h3><div class="kpis" id="resultKpis"></div></div>
+  <div class="panel" id="reviewPanel"><h3>🔁 ふくしゅうしよう</h3><div class="plist" id="reviewList"></div>
+    <div style="text-align:center;margin-top:12px"><button class="btn shu" id="reviewTrain">この句だけで特訓する</button></div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <button class="btn big" id="againBtn">もう一回！</button>
+    <button class="btn ghost big" data-go="home">ホームへ</button>
+  </div>
+</section>
+
+<!-- ================= 成績 ================= -->
+<section id="stats" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" data-go="home">← もどる</button>
+    <h2>📊 せいせき</h2><span></span>
+  </div>
+  <div class="panel"><div class="kpis" id="statKpis"></div></div>
+  <div class="panel">
+    <h3>🗺️ 100首マップ</h3>
+    <div class="grid100" id="grid100"></div>
+    <div class="legend">
+      <span><i style="background:var(--m0)"></i>まだ</span>
+      <span><i style="background:var(--m1)"></i>にがて</span>
+      <span><i style="background:var(--m2)"></i>もう少し</span>
+      <span><i style="background:var(--m3)"></i>おぼえた</span>
+    </div>
+    <p class="note">番号をおすと、その句を ずかんで見られます。</p>
+  </div>
+  <div class="panel">
+    <h3>😣 にがてな句ランキング</h3>
+    <div class="plist" id="weakList"></div>
+    <div style="text-align:center;margin-top:12px"><button class="btn shu" id="weakTrain">にがてTOP10で特訓</button></div>
+  </div>
+  <div class="panel"><h3>🎌 ライバルとの対戦成績</h3><div class="plist" id="cpuRecList"></div></div>
+  <div class="panel"><h3>🕒 さいきんの記録</h3><div class="plist" id="histList"></div></div>
+  <div style="text-align:center"><button class="btn ghost small" id="resetData">🗑️ 記録をすべて消す</button></div>
+</section>
+
+<!-- ================= 図鑑 ================= -->
+<section id="zukan" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" data-go="home">← もどる</button>
+    <h2>📖 百首ずかん</h2><span></span>
+  </div>
+  <div class="panel">
+    <div class="row">
+      <input type="search" id="zSearch" placeholder="ことば・作者・番号でさがす" style="flex:1;min-width:180px">
+      <select id="zFilter">
+        <option value="all">すべて</option><option value="0">まだ</option><option value="1">にがて</option><option value="2">もう少し</option><option value="3">おぼえた</option>
+      </select>
+    </div>
+  </div>
+  <div id="zList"></div>
+</section>
+</div>
+
+<!-- 1枚ごとの解説シート -->
+<div class="sheet" id="sheet"><div class="sheet-in" id="sheetIn"></div></div>
+<div class="flash" id="flash"></div>
+<div class="countdown" id="countdown"><p>札の場所をおぼえよう！</p><b id="cdNum">3</b></div>
+<div class="toast" id="toast"></div>
+
+<!-- 句えらびモーダル -->
+<div class="modal" id="pickerModal">
+  <div class="modal-in">
+    <div class="modal-hd">出題する句をえらぶ <button class="btn ghost small" data-close="pickerModal">✕</button></div>
+    <div class="modal-bd">
+      <div class="quick" id="quickBtns"></div>
+      <div class="pick-grid" id="pickGrid"></div>
+    </div>
+    <div class="modal-ft"><b><span id="pickCount">0</span> 首えらんでいます</b><button class="btn" data-close="pickerModal">決定</button></div>
+  </div>
+</div>
+
+<!-- 設定モーダル -->
+<div class="modal" id="settingsModal">
+  <div class="modal-in">
+    <div class="modal-hd">⚙️ 設定 <button class="btn ghost small" data-close="settingsModal">✕</button></div>
+    <div class="modal-bd">
+      <label class="switch">ふりがなを表示<small>漢字と昔のかなづかいに読み方をつけます</small><input type="checkbox" data-k="ruby"></label>
+      <label class="switch">効果音<input type="checkbox" data-k="sound"></label>
+      <div class="switch" style="display:block">読み上げの速さ <b id="rateLabel" style="float:right">0.8</b>
+        <input type="range" id="rateRange" min="0.5" max="1.3" step="0.05"></div>
+      <div class="switch" style="display:block">読み上げの声
+        <select id="voiceSelect" style="width:100%;margin-top:6px"></select>
+        <div class="row" style="margin-top:8px"><button class="btn ghost small" id="testVoice">🔊 ためしに聞く</button></div>
+      </div>
+      <div class="switch" style="display:block">学年に合わせたおすすめ設定
+        <p class="note">CPUの時間・札の数・制限時間などを学年に合わせます。</p>
+        <button class="btn small" id="applyPreset" style="margin-top:6px">おすすめ設定にする</button>
+      </div>
+    </div>
+    <div class="modal-ft"><span class="note">設定は自動で保存されます</span><button class="btn" data-close="settingsModal">とじる</button></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   A. 百人一首データ（100首）
+   書き方のルール：
+     {漢字|よみ}  … ふりがな（読み上げにも使います）
+     _は          … 助詞の「は」（「わ」と読む）
+   [作者, 作者のよみ, 上の句(／で区切る), 下の句, 決まり字, 意味]
+   ========================================================= */
+const RAW = [
+["天智天皇","てんじてんのう","{秋|あき}の{田|た}の/{かりほ|かりお}の{庵|いお}の/{苫|とま}をあらみ","わが{衣手|ころもで}_は/{露|つゆ}にぬれつつ","あきの","秋の田んぼの番をするための仮小屋は、屋根の編み目があらいので、夜つゆがもれてきて、わたしのそではぬれていくばかりだ。"],
+["持統天皇","じとうてんのう","{春|はる}すぎて/{夏|なつ}{来|き}にけらし/{白妙|しろたえ}の","{衣|ころも}ほす{てふ|ちょう}/{天|あま}の{香具山|かぐやま}","はるす","春が過ぎて、夏が来たらしい。夏になると真っ白な衣をほすという天の香具山に、白い衣がほしてあるよ。"],
+["柿本人麻呂","かきのもとのひとまろ","あしびきの/{山鳥|やまどり}の{尾|お}の/しだり{尾|お}の","ながながし{夜|よ}を/ひとりかも{寝|ね}{む|ん}","あし","山鳥の長くたれさがった尾のように、長い長い秋の夜を、わたしはひとりさびしく寝るのだろうか。"],
+["山部赤人","やまべのあかひと","{田子|たご}の{浦|うら}に/うち{出|い}でて{見|み}れば/{白妙|しろたえ}の","{富士|ふじ}の{高嶺|たかね}に/{雪|ゆき}_は{降|ふ}りつつ","たご","田子の浦の海辺に出て見わたすと、真っ白な富士山の高いみねに、今も雪がふりつづいている。"],
+["猿丸大夫","さるまるだゆう","{奥山|おくやま}に/{紅葉|もみじ}{踏|ふ}みわけ/{鳴|な}く{鹿|しか}の","{声|こえ}{聞|き}く{時|とき}ぞ/{秋|あき}_は{悲|かな}しき","おく","山おくで、もみじをふみ分けながら鳴いているシカの声を聞くときこそ、秋はとくに悲しく感じられる。"],
+["中納言家持","ちゅうなごんやかもち","かささぎの/{渡|わた}せる{橋|はし}に/{置|お}く{霜|しも}の","{白|しろ}きを{見|み}れば/{夜|よ}ぞ{更|ふ}けにける","かさ","カササギがつばさを広げてかけたという天の川の橋。そこにおりた霜が白いのを見ると、夜もすっかりふけたのだなあ。"],
+["安倍仲麿","あべのなかまろ","{天|あま}の{原|はら}/ふりさけ{見|み}れば/{春日|かすが}なる","{三笠|みかさ}の{山|やま}に/{出|い}でし{月|つき}かも","あまの","大空を遠く見上げると月が出ている。あれはふるさとの春日にある三笠山に出ていたのと同じ月なのだなあ。（遠い中国でよんだ歌）"],
+["喜撰法師","きせんほうし","わが{庵|いお}_は/{都|みやこ}のたつみ/しかぞすむ","{世|よ}を{うぢ|うじ}{山|やま}と/{人|ひと}_は{いふ|いう}なり","わがい","わたしの小屋は都の南東にあって、このように心静かにくらしている。それなのに人々は、わたしが世の中をつらいと思って宇治山ににげこんだと言っているそうだ。"],
+["小野小町","おののこまち","{花|はな}の{色|いろ}_は/うつりにけりな/{いたづら|いたずら}に","わが{身|み}{世|よ}にふる/ながめせしまに","はなの","桜の花の色は、長雨がふっている間にむなしく色あせてしまった。わたしの美しさも、もの思いにふけっている間におとろえてしまったなあ。"],
+["蝉丸","せみまる","これやこの/{行|ゆ}くも{帰|かえ}るも/{別|わか}れて_は","{知|し}るも{知|し}らぬも/{逢坂|おうさか}の{関|せき}","これ","これがあの、都から出ていく人も帰る人も、知っている人も知らない人も、ここで出会い、別れるという逢坂の関なのだなあ。"],
+["参議篁","さんぎたかむら","わたの{原|はら}/{八十島|やそしま}かけて/{漕|こ}ぎ{出|い}でぬと","{人|ひと}に_は{告|つ}げよ/{海人|あま}の{釣舟|つりぶね}","わたのはらや","大海原のたくさんの島々をめざして、船をこぎ出していったと、都にいる人に伝えておくれ、漁師のつり舟よ。（島流しにされるときの歌）"],
+["僧正遍昭","そうじょうへんじょう","{天|あま}つ{風|かぜ}/{雲|くも}の{通ひ路|かよいじ}/{吹|ふ}き{とぢ|とじ}よ","{をとめ|おとめ}の{姿|すがた}/しばしとどめ{む|ん}","あまつ","空をふく風よ、雲の中の通り道をふさいでおくれ。天女のように美しくまう少女たちのすがたを、もう少しここにとどめておきたいから。"],
+["陽成院","ようぜいいん","{筑波嶺|つくばね}の/{峰|みね}より{落|お}つる/{男女川|みなのがわ}","{恋|こい}ぞつもりて/{淵|ふち}となりぬる","つく","筑波山の頂上から流れ落ちる男女川の水がたまって深いふちになるように、わたしの恋心もつもりつもって、深い思いになってしまった。"],
+["河原左大臣","かわらのさだいじん","みちのくの/しのぶ{もぢずり|もじずり}/{誰|たれ}{ゆゑ|ゆえ}に","{乱|みだ}れそめにし/われならなくに","みち","みちのくの「しのぶもじずり」というもようのように、わたしの心がみだれはじめたのはだれのせいでしょう。わたしのせいではなく、あなたのせいなのに。"],
+["光孝天皇","こうこうてんのう","{君|きみ}がため/{春|はる}の{野|の}に{出|い}でて/{若菜|わかな}{摘|つ}む","わが{衣手|ころもで}に/{雪|ゆき}_は{降|ふ}りつつ","きみがためは","あなたにあげるために、春の野に出て若菜をつんでいると、わたしのそでに雪がしきりにふりかかってくるよ。"],
+["中納言行平","ちゅうなごんゆきひら","{立|た}ち{別|わか}れ/いなばの{山|やま}の/{峰|みね}に{生ふる|おうる}","まつとし{聞|き}かば/{今|いま}{帰|かえ}り{来|こ}{む|ん}","たち","お別れして因幡の国へ行きますが、因幡山のみねに生えている松のように、あなたが待っていると聞いたら、すぐにでも帰ってきますよ。"],
+["在原業平朝臣","ありわらのなりひらあそん","ちはやぶる/{神代|かみよ}も{聞|き}かず/{竜田川|たつたがわ}","から{くれなゐ|くれない}に/{水|みず}くくると_は","ちは","ふしぎなことが多かった神様の時代にも聞いたことがない。竜田川の水面を、もみじがあざやかな紅色にそめあげているとは。"],
+["藤原敏行朝臣","ふじわらのとしゆきあそん","{住|すみ}の{江|え}の/{岸|きし}に{寄|よ}る{波|なみ}/よる{さへ|さえ}や","{夢|ゆめ}の{通ひ路|かよいじ}/{人目|ひとめ}よく{らむ|らん}","す","住の江の岸に波が寄るように、夜の夢の中でさえ、あなたはどうして人目をさけて会いに来てくれないのだろう。"],
+["伊勢","いせ","{難波潟|なにわがた}/{短|みじか}き{蘆|あし}の/ふしの{間|ま}も","{逢はで|あわで}この{世|よ}を/{過|す}ぐしてよとや","なにはが","難波潟に生えている蘆の、ふしとふしの間のような短い時間でさえ会わずに、この世をすごせとあなたは言うのですか。"],
+["元良親王","もとよししんのう","わびぬれば/{今|いま}はた{同|おな}じ/{難波|なにわ}なる","みをつくしても/{逢は|あわ}{む|ん}とぞ{思ふ|おもう}","わび","うわさが立って苦しんでいる今は、もうどうなっても同じこと。難波の「みおつくし」のように、身をほろぼしてでもあなたに会いたいと思う。"],
+["素性法師","そせいほうし","{今|いま}{来|こ}{む|ん}と/{言ひ|いい}しばかりに/{長月|ながつき}の","{有明|ありあけ}の{月|つき}を/{待|ま}ち{出|い}でつるかな","いまこ","「すぐに行くよ」とあなたが言ったばかりに、秋の長い夜を待ちつづけて、とうとう明け方の月が出るまで待ってしまったよ。"],
+["文屋康秀","ふんやのやすひで","{吹|ふ}くからに/{秋|あき}の{草木|くさき}の/{しをるれ|しおるれ}ば","むべ{山風|やまかぜ}を/{嵐|あらし}と{いふ|いう}{らむ|らん}","ふ","風がふくとすぐに秋の草や木がしおれてしまうので、なるほど、山からふく風を「あらし（荒らし）」と言うのだろう。"],
+["大江千里","おおえのちさと","{月|つき}{見|み}れば/ちぢに{物|もの}こそ/{悲|かな}しけれ","わが{身|み}ひとつの/{秋|あき}に_はあらねど","つき","月を見ていると、あれこれと悲しい気持ちになる。わたし一人のためにやってきた秋ではないのだけれど。"],
+["菅家","かんけ","このたび_は/{幣|ぬさ}もとり{あへ|あえ}ず/{手向山|たむけやま}","{紅葉|もみじ}の{錦|にしき}/{神|かみ}のまにまに","この","今度の旅は急だったので、神様へのおそなえも用意できなかった。手向山の錦のように美しいもみじを、神様の心のままにお受けください。（菅原道真の歌）"],
+["三条右大臣","さんじょうのうだいじん","{名|な}にし{負は|おわ}ば/{逢坂山|おうさかやま}の/さね{かづら|かずら}","{人|ひと}に{知|し}られで/くるよしもがな","なにし","「逢って寝る」という名前をもつ逢坂山のさねかずらよ。そのつるをたぐるように、人に知られずにあなたのもとへ行く方法があればいいのに。"],
+["貞信公","ていしんこう","{小倉山|おぐらやま}/{峰|みね}の{もみぢ葉|もみじば}/{心|こころ}あらば","{今|いま}ひとたびの/みゆき{待|ま}たな{む|ん}","をぐ","小倉山のみねのもみじよ、もしおまえに心があるなら、もう一度天皇がおいでになるまで、散らずに待っていておくれ。"],
+["中納言兼輔","ちゅうなごんかねすけ","みかの{原|はら}/わきて{流|なが}るる/{いづみ川|いずみがわ}","いつ{見|み}きとてか/{恋|こい}しかる{らむ|らん}","みかの","みかの原をわけて流れるいずみ川。その「いつ」ではないが、いつ会ったというので、こんなにもあの人が恋しいのだろう。（まだ会ったこともないのに）"],
+["源宗于朝臣","みなもとのむねゆきあそん","{山里|やまざと}_は/{冬|ふゆ}ぞさびしさ/まさりける","{人目|ひとめ}も{草|くさ}も/かれぬと{思へ|おもえ}ば","やまざ","山里は、冬がとくにさびしく感じられる。たずねてくる人もいなくなり、草もかれてしまうと思うと。"],
+["凡河内躬恒","おおしこうちのみつね","{心|こころ}あてに/{折|お}らばや{折|お}ら{む|ん}/{初霜|はつしも}の","{置|お}き{まどはせ|まどわせ}る/{白菊|しらぎく}の{花|はな}","こころあ","あてずっぽうに折ってみようか。一面におりた初霜で、どれが白菊の花か見分けがつかなくなっているから。"],
+["壬生忠岑","みぶのただみね","{有明|ありあけ}の/つれなく{見|み}えし/{別|わか}れより","{暁|あかつき}ばかり/{憂|う}きもの_はなし","ありあ","明け方の月がそっけなく見えたように、あの人が冷たかった別れのときから、夜明け前ほどつらいものはなくなった。"],
+["坂上是則","さかのうえのこれのり","{朝|あさ}ぼらけ/{有明|ありあけ}の{月|つき}と/{見|み}るまでに","{吉野|よしの}の{里|さと}に/{降|ふ}れる{白雪|しらゆき}","あさぼらけあ","夜がほのぼのと明けるころ、明け方の月の光かと思うほどに、吉野の里に白い雪がふりつもっているよ。"],
+["春道列樹","はるみちのつらき","{山川|やまがわ}に/{風|かぜ}のかけたる/しがらみ_は","{流|なが}れも{あへ|あえ}ぬ/{紅葉|もみじ}なりけり","やまが","山の中の川に、風がかけたせきとめの柵（しがらみ）があると思ったら、それは流れきれずにたまっているもみじだったのだなあ。"],
+["紀友則","きのとものり","ひさかたの/{光|ひかり}のどけき/{春|はる}の{日|ひ}に","{しづ心|しずごころ}なく/{花|はな}の{散|ち}る{らむ|らん}","ひさ","日の光がのどかにふりそそぐ春の日に、どうして桜の花は落ち着いた心もなく、あわただしく散っていくのだろう。"],
+["藤原興風","ふじわらのおきかぜ","{誰|たれ}をかも/{知|し}る{人|ひと}にせ{む|ん}/{高砂|たかさご}の","{松|まつ}も{昔|むかし}の/{友|とも}ならなくに","たれ","年をとったわたしは、だれを友だちにすればよいのだろう。長生きの高砂の松も、昔からの友だちではないのに。"],
+["紀貫之","きのつらゆき","{人|ひと}_はいさ/{心|こころ}も{知|し}らず/ふるさと_は","{花|はな}ぞ{昔|むかし}の/{香|か}に{にほひ|におい}ける","ひとは","あなたの心は変わったかどうかわかりません。でも、なつかしいこの里では、梅の花が昔と同じよい香りでさいていますよ。"],
+["清原深養父","きよはらのふかやぶ","{夏|なつ}の{夜|よ}_は/まだ{宵|よい}ながら/{明|あ}けぬるを","{雲|くも}の{いづこ|いずこ}に/{月|つき}{宿|やど}る{らむ|らん}","なつ","夏の夜は短くて、まだ夜になったばかりと思っているうちに明けてしまった。月は西の山にしずむひまもなく、雲のどこにやどっているのだろう。"],
+["文屋朝康","ふんやのあさやす","{白露|しらつゆ}に/{風|かぜ}の{吹|ふ}きしく/{秋|あき}の{野|の}_は","つらぬきとめぬ/{玉|たま}ぞ{散|ち}りける","しら","草の葉の上の白いつゆに、風がしきりにふきつける秋の野原は、ひもを通していない真珠が、ぱらぱらと散っているようだ。"],
+["右近","うこん","{忘|わす}らるる/{身|み}をば{思は|おもわ}ず/{誓ひ|ちかい}てし","{人|ひと}の{命|いのち}の/{惜|お}しくもあるかな","わすら","あなたに忘れられるわたしのことはなんとも思いません。ただ、神様にちかったあなたが、ばちが当たって命を落とすのではないかと、それがおしまれます。"],
+["参議等","さんぎひとし","{浅茅生|あさじう}の/{小野|おの}の{篠原|しのはら}/しのぶれど","あまりてなどか/{人|ひと}の{恋|こい}しき","あさぢ","浅茅の生えている野原の篠原の「しの」のように、しのんでがまんしているけれど、もうこらえきれない。どうしてこんなにあの人が恋しいのだろう。"],
+["平兼盛","たいらのかねもり","しのぶれど/{色|いろ}に{出|い}でにけり/わが{恋|こい}_は","{物|もの}や{思ふ|おもう}と/{人|ひと}の{問ふ|とう}まで","しの","ひみつにしていたのに、顔色に出てしまったようだ、わたしの恋は。「なにか悩みごとでもあるの？」と人にたずねられるほどに。"],
+["壬生忠見","みぶのただみ","{恋|こい}す{てふ|ちょう}/わが{名|な}_はまだき/{立|た}ちにけり","{人|ひと}{知|し}れずこそ/{思ひ|おもい}そめしか","こひ","恋をしているといううわさが、もう立ってしまった。だれにも知られないように、こっそり思いはじめたばかりなのに。"],
+["清原元輔","きよはらのもとすけ","{契|ちぎ}りきな/かたみに{袖|そで}を/しぼりつつ","{末|すえ}の{松山|まつやま}/{波|なみ}{越|こ}さじと_は","ちぎりき","約束しましたよね。おたがいに涙でぬれたそでをしぼりながら、末の松山を波がこえることがないように、心変わりはしないと。"],
+["権中納言敦忠","ごんちゅうなごんあつただ","{逢ひ見|あいみ}ての/{後|のち}の{心|こころ}に/くらぶれば","{昔|むかし}_は{物|もの}を/{思は|おもわ}ざりけり","あひ","あなたと会って思いがかなったあとの、この切ない気持ちにくらべると、会う前のなやみなんて、なんでもなかったのだなあ。"],
+["中納言朝忠","ちゅうなごんあさただ","{逢ふ|おう}ことの/{絶|た}えてしなく_は/なかなかに","{人|ひと}をも{身|み}をも/{恨|うら}みざらまし","あふ","もし会うことがまったくなかったなら、かえってあの人のつれなさも、自分の身のつらさも、うらまなかっただろうに。"],
+["謙徳公","けんとくこう","{あはれ|あわれ}とも/{言ふ|いう}べき{人|ひと}_は/{思ほえ|おもおえ}で","{身|み}の{いたづら|いたずら}に/なりぬべきかな","あはれ","わたしのことを「かわいそうに」と言ってくれそうな人も思いうかばない。わたしはこのまま、むなしく死んでしまうのだろうなあ。"],
+["曾禰好忠","そねのよしただ","{由良|ゆら}の{門|と}を/{渡|わた}る{舟人|ふなびと}/{かぢ|かじ}を{絶|た}え","{行方|ゆくえ}も{知|し}らぬ/{恋|こい}の{道|みち}かな","ゆら","由良の海峡をわたる船頭が、かじをなくしてどこへ流されるかわからないように、この先どうなるのかわからない、わたしの恋の行く先だなあ。"],
+["恵慶法師","えぎょうほうし","{八重|やえ}むぐら/しげれる{宿|やど}の/さびしきに","{人|ひと}こそ{見|み}えね/{秋|あき}_は{来|き}にけり","やへ","つる草がおいしげった、さびしいこの家には、たずねてくる人はだれもいないけれど、秋だけはちゃんとやってきたのだなあ。"],
+["源重之","みなもとのしげゆき","{風|かぜ}をいたみ/{岩|いわ}うつ{波|なみ}の/おのれのみ","くだけて{物|もの}を/{思ふ|おもう}ころかな","かぜを","風がはげしいので、岩にうちつける波が自分だけくだけ散るように、あの人は平気なのに、わたしだけが心をくだいて思いなやむこのごろだ。"],
+["大中臣能宣朝臣","おおなかとみのよしのぶあそん","みかきもり/{衛士|えじ}のたく{火|ひ}の/{夜|よる}_は{燃|も}え","{昼|ひる}_は{消|き}えつつ/{物|もの}をこそ{思へ|おもえ}","みかき","宮中の門を守る兵士がたくかがり火は、夜はもえて昼は消えている。そのように、わたしの恋も夜はもえ上がり、昼は消え入るように思いなやんでいる。"],
+["藤原義孝","ふじわらのよしたか","{君|きみ}がため/{惜|お}しからざりし/{命|いのち}{さへ|さえ}","{長|なが}くもがなと/{思ひ|おもい}けるかな","きみがためを","あなたに会うためなら、すてても惜しくないと思っていた命でしたが、会えた今は、長く生きていたいと思うようになりました。"],
+["藤原実方朝臣","ふじわらのさねかたあそん","かくとだに/えや_はいぶきの/さしも{草|ぐさ}","さしも{知|し}らじな/{燃|も}ゆる{思ひ|おもい}を","かく","こんなにあなたを思っていると言うことさえできません。伊吹山のさしも草のように、もえるわたしの思いを、あなたは知らないでしょうね。"],
+["藤原道信朝臣","ふじわらのみちのぶあそん","{明|あ}けぬれば/{暮|く}るるものと_は/{知|し}りながら","{なほ|なお}{恨|うら}めしき/{朝|あさ}ぼらけかな","あけ","夜が明ければ、また日がくれてあなたに会えるとわかっているけれど、それでもやっぱり、別れなければならない夜明けはうらめしいなあ。"],
+["右大将道綱母","うだいしょうみちつなのはは","{嘆|なげ}きつつ/ひとり{寝|ぬ}る{夜|よ}の/{明|あ}くる{間|ま}_は","いかに{久|ひさ}しき/ものとか_は{知|し}る","なげき","なげきながらひとりで寝る夜が明けるまでの時間が、どんなに長いものか、あなたは知っているでしょうか。いいえ、知らないでしょう。"],
+["儀同三司母","ぎどうさんしのはは","{忘|わす}れじの/{行く末|ゆくすえ}まで_は/かたければ","{今日|きょう}を{限|かぎ}りの/{命|いのち}ともがな","わすれ","「いつまでも忘れないよ」というあなたの言葉が、遠い先まで変わらないとは思えないので、幸せな今日を最後に命が終わってしまえばいいのに。"],
+["大納言公任","だいなごんきんとう","{滝|たき}の{音|おと}_は/{絶|た}えて{久|ひさ}しく/なりぬれど","{名|な}こそ{流|なが}れて/{なほ|なお}{聞|き}こえけれ","たき","滝の水の音が聞こえなくなってからずいぶんたったけれど、そのすばらしさの評判は流れ伝わって、今でも聞こえてくるよ。"],
+["和泉式部","いずみしきぶ","あらざら{む|ん}/この{世|よ}のほかの/{思ひ出|おもいで}に","{今|いま}ひとたびの/{逢ふ|おう}こともがな","あらざ","わたしはもうすぐ死んでしまうでしょう。あの世への思い出に、せめてもう一度だけ、あなたに会いたいものです。"],
+["紫式部","むらさきしきぶ","めぐり{逢ひ|あい}て/{見|み}しやそれとも/わかぬ{間|ま}に","{雲隠|くもがく}れにし/{夜半|よわ}の{月|つき}かな","め","久しぶりにめぐり会ったのに、あなただとはっきりわからないうちに、雲にかくれる夜中の月のように、あなたは帰ってしまいましたね。（『源氏物語』の作者）"],
+["大弐三位","だいにのさんみ","{有馬山|ありまやま}/{猪名|いな}の{笹原|ささはら}/{風|かぜ}{吹|ふ}けば","いでそよ{人|ひと}を/{忘|わす}れや_はする","ありま","有馬山の近くの猪名の笹原に風がふくと、笹の葉がそよそよと鳴る。そうですよ、わたしがあなたを忘れたりするものですか。"],
+["赤染衛門","あかぞめえもん","{やすらは|やすらわ}で/{寝|ね}なましものを/さ{夜|よ}ふけて","かたぶくまでの/{月|つき}を{見|み}しかな","やす","あなたが来ないとわかっていたら、ためらわずに寝てしまったのに。あなたを待って夜がふけ、西にしずむまでの月を見てしまいました。"],
+["小式部内侍","こしきぶのないし","{大江山|おおえやま}/いく{野|の}の{道|みち}の/{遠|とお}ければ","まだふみも{見|み}ず/{天|あま}の{橋立|はしだて}","おほえ","大江山をこえ、生野を通っていく道は遠いので、まだ天の橋立に行ったこともないし、母からの手紙（ふみ）も見ていません。"],
+["伊勢大輔","いせのたいふ","{いにしへ|いにしえ}の/{奈良|なら}の{都|みやこ}の/{八重桜|やえざくら}","{けふ|きょう}{九重|ここのえ}に/{にほひ|におい}ぬるかな","いに","昔、都だった奈良の八重桜が、今日はこの宮中で、ひときわ美しくさきほこっていますよ。"],
+["清少納言","せいしょうなごん","{夜|よ}をこめて/{鳥|とり}のそら{音|ね}_は/はかるとも","よに{逢坂|おうさか}の/{関|せき}_は{許|ゆる}さじ","よを","夜が明けないうちに、にわとりの鳴きまねをしてだまそうとしても、この逢坂の関はぜったいに通しませんよ。（『枕草子』の作者）"],
+["左京大夫道雅","さきょうのだいぶみちまさ","{今|いま}_はただ/{思ひ|おもい}{絶|た}えな{む|ん}/とばかりを","{人|ひと}づてならで/{言ふ|いう}よしもがな","いまは","今はもう、あなたのことをあきらめますという、そのひとことだけでも、人づてではなく、直接あなたに言う方法があればいいのに。"],
+["権中納言定頼","ごんちゅうなごんさだより","{朝|あさ}ぼらけ/{宇治|うじ}の{川霧|かわぎり}/たえだえに","{あらはれ|あらわれ}わたる/{瀬々|せぜ}の{網代木|あじろぎ}","あさぼらけう","夜がほのぼのと明けるころ、宇治川にかかっていた霧がとぎれとぎれになって、そのすきまから、川のあちこちの網代木が見えてきたよ。"],
+["相模","さがみ","{恨|うら}みわび/ほさぬ{袖|そで}だに/あるものを","{恋|こい}に{朽|く}ちな{む|ん}/{名|な}こそ{惜|お}しけれ","うら","あの人のつれなさをうらんで、涙でかわくひまもないそでさえくちてしまいそうなのに、そのうえ恋のうわさで、わたしの評判までくちてしまうのが残念です。"],
+["前大僧正行尊","さきのだいそうじょうぎょうそん","もろともに/{あはれ|あわれ}と{思へ|おもえ}/{山桜|やまざくら}","{花|はな}よりほかに/{知|し}る{人|ひと}もなし","もろ","いっしょになつかしく思っておくれ、山桜よ。こんな山おくでは、おまえのほかにわたしの気持ちをわかってくれる人はいないのだから。"],
+["周防内侍","すおうのないし","{春|はる}の{夜|よ}の/{夢|ゆめ}ばかりなる/{手枕|たまくら}に","{かひ|かい}なく{立|た}た{む|ん}/{名|な}こそ{惜|お}しけれ","はるの","短い春の夜の夢のように、ほんの少しの間、あなたのうでをまくらにかりただけで、つまらないうわさが立つのはくやしいことです。"],
+["三条院","さんじょういん","{心|こころ}にも/あらでうき{世|よ}に/{ながらへ|ながらえ}ば","{恋|こい}しかるべき/{夜半|よわ}の{月|つき}かな","こころに","心ならずも、このつらい世の中に生きながらえていたら、きっと今夜のこの夜中の月を、恋しく思い出すことだろう。"],
+["能因法師","のういんほうし","{嵐|あらし}{吹|ふ}く/{三室|みむろ}の{山|やま}の/{もみぢ葉|もみじば}_は","{竜田|たつた}の{川|かわ}の/{錦|にしき}なりけり","あらし","嵐がふく三室山のもみじの葉は、ふきちらされて竜田川にうかび、川を錦の織物のように美しくかざっているよ。"],
+["良暹法師","りょうぜんほうし","さびしさに/{宿|やど}を{立|た}ち{出|い}でて/ながむれば","{いづこ|いずこ}も{同|おな}じ/{秋|あき}の{夕暮|ゆうぐれ}","さ","さびしさにたえかねて、家を出てあたりを見わたすと、どこも同じようにさびしい秋の夕ぐれだなあ。"],
+["大納言経信","だいなごんつねのぶ","{夕|ゆう}されば/{門田|かどた}の{稲葉|いなば}/{おとづれ|おとずれ}て","{蘆|あし}のまろやに/{秋風|あきかぜ}ぞ{吹|ふ}く","ゆふ","夕方になると、家の前の田んぼの稲の葉をさらさらと鳴らして、蘆ぶきの小屋に秋風がふいてくるよ。"],
+["祐子内親王家紀伊","ゆうしないしんのうけのきい","{音|おと}に{聞|き}く/{高師|たかし}の{浜|はま}の/あだ{波|なみ}_は","かけじや{袖|そで}の/{濡|ぬ}れもこそすれ","おと","うわさに聞く高師の浜のいたずらな波のように、うわき者と評判のあなたの言葉なんて、心にかけません。あとで涙でそでをぬらすことになるから。"],
+["権中納言匡房","ごんちゅうなごんまさふさ","{高砂|たかさご}の/{尾上|おのえ}の{桜|さくら}/{咲|さ}きにけり","{外山|とやま}の{霞|かすみ}/{立|た}たずもあらな{む|ん}","たか","遠くの高い山のみねに、桜がさいたよ。近くの山のかすみよ、どうか立ちこめないでおくれ。桜が見えなくなってしまうから。"],
+["源俊頼朝臣","みなもとのとしよりあそん","{憂|う}かりける/{人|ひと}を{初瀬|はつせ}の/{山|やま}おろしよ","はげしかれと_は/{祈|いの}らぬものを","うか","つれないあの人がふり向いてくれるようにと初瀬の観音様にいのったのに。初瀬の山からふきおろす風のように、もっとつめたくなれとはいのらなかったのに。"],
+["藤原基俊","ふじわらのもととし","{契|ちぎ}りおきし/させもが{露|つゆ}を/{命|いのち}にて","{あはれ|あわれ}{今年|ことし}の/{秋|あき}もいぬめり","ちぎりお","「わたしにまかせなさい」というあなたのやくそくの言葉を、命のようにたよりにしてきたのに、ああ、今年の秋もむなしくすぎていくようだ。"],
+["法性寺入道前関白太政大臣","ほっしょうじにゅうどうさきのかんぱくだいじょうだいじん","わたの{原|はら}/{漕|こ}ぎ{出|い}でて{見|み}れば/ひさかたの","{雲居|くもい}に{まがふ|まがう}/{沖|おき}つ{白波|しらなみ}","わたのはらこ","大海原に船をこぎ出して見わたすと、遠くの雲と見まちがえるほどに、沖のほうに白い波が立っているよ。"],
+["崇徳院","すとくいん","{瀬|せ}をはやみ/{岩|いわ}にせかるる/{滝川|たきがわ}の","われても{末|すえ}に/{逢は|あわ}{む|ん}とぞ{思ふ|おもう}","せ","川の流れが速いので、岩にせきとめられた急流が二つにわかれても、またひとつになるように、今は別れても、いつかきっと会おうと思う。"],
+["源兼昌","みなもとのかねまさ","{淡路島|あわじしま}/{通ふ|かよう}{千鳥|ちどり}の/{鳴|な}く{声|こえ}に","いく{夜|よ}{寝覚|ねざ}めぬ/{須磨|すま}の{関守|せきもり}","あはぢ","淡路島から飛んでくる千鳥の鳴く声に、いく晩目をさましたことだろう、須磨の関所の番人は。"],
+["左京大夫顕輔","さきょうのだいぶあきすけ","{秋風|あきかぜ}に/たなびく{雲|くも}の/{絶|た}え{間|ま}より","{漏|も}れ{出づる|いずる}{月|つき}の/{影|かげ}のさやけさ","あきか","秋風にたなびいている雲の切れ間から、もれ出てくる月の光の、なんとすみきって明るいことよ。"],
+["待賢門院堀河","たいけんもんいんのほりかわ","{長|なが}から{む|ん}/{心|こころ}も{知|し}らず/{黒髪|くろかみ}の","{乱|みだ}れて{今朝|けさ}_は/{物|もの}をこそ{思へ|おもえ}","ながか","あなたの心がいつまでも変わらないかどうかわかりません。別れたけさは、わたしの黒髪がみだれているように、心もみだれて思いなやんでいます。"],
+["後徳大寺左大臣","ごとくだいじのさだいじん","ほととぎす/{鳴|な}きつる{方|かた}を/ながむれば","ただ{有明|ありあけ}の/{月|つき}ぞ{残|のこ}れる","ほ","ほととぎすが鳴いた方を見ると、そこにはほととぎすのすがたはなく、ただ明け方の月だけが空に残っていた。"],
+["道因法師","どういんほうし","{思ひ|おもい}わび/さても{命|いのち}_は/あるものを","{憂|う}きに{たへ|たえ}ぬ_は/{涙|なみだ}なりけり","おも","つれない人を思って苦しんでいても、命はなんとかつながっているのに、つらさにたえきれないで流れ落ちるのは涙だなあ。"],
+["皇太后宮大夫俊成","こうたいごうぐうのだいぶしゅんぜい","{世|よ}の{中|なか}よ/{道|みち}こそなけれ/{思ひ入る|おもいいる}","{山|やま}の{奥|おく}にも/{鹿|しか}ぞ{鳴|な}くなる","よのなかよ","この世の中には、つらさからにげる道はないのだなあ。思いつめて入ってきた山おくでも、シカが悲しそうに鳴いている。"],
+["藤原清輔朝臣","ふじわらのきよすけあそん","{ながらへ|ながらえ}ば/またこのごろや/しのばれ{む|ん}","{憂|う}しと{見|み}し{世|よ}ぞ/{今|いま}_は{恋|こい}しき","ながら","生きながらえたら、つらい今のことも、なつかしく思い出されるのだろうか。つらいと思っていた昔が、今は恋しく思われるのだから。"],
+["俊恵法師","しゅんえほうし","{夜|よ}もすがら/{物|もの}{思ふ|おもう}ころ_は/{明|あ}けやらで","{閨|ねや}のひま{さへ|さえ}/つれなかりけり","よも","一晩中あの人を思ってなやんでいるこのごろは、夜がなかなか明けず、朝の光がさしこまない寝室の戸のすきままでが、つれなく思われるよ。"],
+["西行法師","さいぎょうほうし","{嘆|なげ}けとて/{月|つき}や_は{物|もの}を/{思は|おもわ}する","かこち{顔|がお}なる/わが{涙|なみだ}かな","なげけ","「なげけ」と月がわたしにもの思いをさせるのだろうか。いや、そうではないのに、月のせいにするかのように、わたしの涙がこぼれ落ちるよ。"],
+["寂蓮法師","じゃくれんほうし","{村雨|むらさめ}の/{露|つゆ}もまだ{干|ひ}ぬ/{槙|まき}の{葉|は}に","{霧|きり}{立|た}ちのぼる/{秋|あき}の{夕暮|ゆうぐれ}","む","にわか雨が通りすぎて、そのしずくもまだかわかない槙の葉のあたりに、霧が白く立ちのぼっていく、秋の夕ぐれよ。"],
+["皇嘉門院別当","こうかもんいんのべっとう","{難波江|なにわえ}の/{蘆|あし}のかりねの/ひとよ{ゆゑ|ゆえ}","みをつくしてや/{恋ひ|こい}わたるべき","なにはえ","難波の入り江の蘆のかり根の一節（ひとよ）のような、たった一夜の旅のかりねのために、身をつくして一生恋しつづけることになるのでしょうか。"],
+["式子内親王","しょくしないしんのう","{玉|たま}の{緒|お}よ/{絶|た}えなば{絶|た}えね/{ながらへ|ながらえ}ば","{忍|しの}ぶることの/{弱|よわ}りもぞする","たま","わたしの命よ、絶えるなら絶えてしまえ。このまま生きながらえていたら、恋をかくしてがまんする心が弱って、人に知られてしまうから。"],
+["殷富門院大輔","いんぷもんいんのたいふ","{見|み}せばやな/{雄島|おじま}の{海人|あま}の/{袖|そで}だにも","{濡|ぬ}れにぞ{濡|ぬ}れし/{色|いろ}_は{変は|かわ}らず","みせ","あなたに見せたいものです。雄島の漁師のそででさえ、ぬれにぬれても色は変わらないのに、わたしのそでは涙で色まで変わってしまいました。"],
+["後京極摂政前太政大臣","ごきょうごくせっしょうさきのだいじょうだいじん","きりぎりす/{鳴|な}くや{霜夜|しもよ}の/さむしろに","{衣|ころも}かたしき/ひとりかも{寝|ね}{む|ん}","きり","コオロギが鳴いている霜のおりる寒い夜に、むしろの上に自分の着物だけをしいて、わたしはひとりさびしく寝るのだろうか。"],
+["二条院讃岐","にじょういんのさぬき","わが{袖|そで}_は/{潮干|しおひ}に{見|み}えぬ/{沖|おき}の{石|いし}の","{人|ひと}こそ{知|し}らね/{乾|かわ}く{間|ま}もなし","わがそ","わたしのそでは、潮が引いても見えない沖の石のように、人には知られないけれど、涙でかわくひまもありません。"],
+["鎌倉右大臣","かまくらのうだいじん","{世|よ}の{中|なか}_は/{常|つね}にもがもな/{渚|なぎさ}こぐ","{海人|あま}の{小舟|おぶね}の/{綱手|つなで}かなしも","よのなかは","世の中はいつまでも変わらないでほしいなあ。波打ちぎわをこいでいく漁師の小舟が、綱で引かれていくようすは、しみじみと心にしみるよ。（源実朝の歌）"],
+["参議雅経","さんぎまさつね","み{吉野|よしの}の/{山|やま}の{秋風|あきかぜ}/さ{夜|よ}ふけて","ふるさと{寒|さむ}く/{衣|ころも}うつなり","みよ","吉野の山から秋風がふきおろし、夜もふけて、昔都があったこの里は寒く、着物をうつ音がさびしく聞こえてくる。"],
+["前大僧正慈円","さきのだいそうじょうじえん","{おほけ|おおけ}なく/うき{世|よ}の{民|たみ}に/{おほふ|おおう}かな","わが{立|た}つ{杣|そま}に/{墨染|すみぞめ}の{袖|そで}","おほけ","身のほど知らずかもしれないが、つらいこの世に生きる人々をつつみこむように、比叡山に住むわたしは、この墨染めのそでで人々の幸せをいのろう。"],
+["入道前太政大臣","にゅうどうさきのだいじょうだいじん","{花|はな}{さそふ|さそう}/{嵐|あらし}の{庭|にわ}の/{雪|ゆき}ならで","ふりゆくもの_は/わが{身|み}なりけり","はなさ","嵐が花をさそって散らし、庭は雪がふったように白い。でも、本当にふりゆく（年をとっていく）のは、花ではなくわたし自身なのだなあ。"],
+["権中納言定家","ごんちゅうなごんさだいえ","{来|こ}ぬ{人|ひと}を/まつほの{浦|うら}の/{夕|ゆう}なぎに","{焼|や}くや{藻塩|もしお}の/{身|み}もこがれつつ","こぬ","いくら待っても来ない人を待つわたしは、松帆の浦の夕なぎのころに焼かれる藻塩のように、身もこがれるほど恋しく思っている。（百人一首をえらんだ人）"],
+["従二位家隆","じゅにいいえたか","{風|かぜ}そよぐ/ならの{小川|おがわ}の/{夕暮|ゆうぐれ}_は","みそぎぞ{夏|なつ}の/しるしなりける","かぜそ","風がならの葉をそよそよとゆらす、ならの小川の夕ぐれは、もう秋のようにすずしい。でも、川でおこなわれているみそぎだけが、まだ夏であるしるしなのだなあ。"],
+["後鳥羽院","ごとばいん","{人|ひと}も{惜|お}し/{人|ひと}も{恨|うら}めし/{あぢき|あじき}なく","{世|よ}を{思ふ|おもう}{ゆゑ|ゆえ}に/{物|もの}{思ふ|おもう}{身|み}_は","ひとも","人をいとおしく思うこともあれば、うらめしく思うこともある。思うようにならないこの世の中のことを思うと、あれこれとなやんでしまうわたしだ。"],
+["順徳院","じゅんとくいん","ももしきや/{古|ふる}き{軒端|のきば}の/しのぶにも","{なほ|なお}あまりある/{昔|むかし}なりけり","もも","宮中の古い軒先に生えているしのぶ草を見るにつけても、しのんでもしのびきれないほど、なつかしいのは昔のよき時代のことだなあ。"]
+];
+
+/* =========================================================
+   B. データの準備（ふりがな・読み上げ用の文字を作る）
+   ========================================================= */
+function parseLine(s){
+  const out=[]; const re=/\{([^|}]+)\|([^}]+)\}|_(.)|([^{_])/gu; let m;
+  while((m=re.exec(s))){
+    if(m[1]) out.push({b:m[1],r:m[2],ruby:true});
+    else if(m[3]) out.push({b:m[3],r:m[3]==='は'?'わ':(m[3]==='へ'?'え':m[3])});
+    else out.push({b:m[4],r:m[4]});
+  }
+  return out;
+}
+const POEMS = RAW.map((r,i)=>{
+  const kami=r[2].split('/').map(parseLine), shimo=r[3].split('/').map(parseLine);
+  const read=ls=>ls.map(l=>l.map(t=>t.r).join(''));
+  const plain=ls=>ls.map(l=>l.map(t=>t.b).join(''));
+  return {id:i+1,author:r[0],authorYomi:r[1],kami,shimo,kima:r[4],meaning:r[5],
+    kamiR:read(kami).join(''),shimoR:read(shimo).join(''),
+    kamiReadLines:read(kami),shimoReadLines:read(shimo),
+    kamiPlain:plain(kami).join(' '),shimoPlain:plain(shimo).join(' ')};
+});
+const P = id=>POEMS[id-1];
+const esc = s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function tokHTML(t){ return t.ruby?`<ruby>${t.b}<rt>${t.r}</rt></ruby>`:t.b; }
+function lineHTML(l){ return l.map(tokHTML).join(''); }
+function poemHTML(p){
+  return `<div>${p.kami.map(lineHTML).join('　')}</div><div class="s">${p.shimo.map(lineHTML).join('　')}</div>`;
+}
+
+/* =========================================================
+   C. CPUキャラクター・学年
+   ========================================================= */
+const CPUS = [
+  {id:1,name:'ころまる',emoji:'🐶',title:'見習いわんこ',bg:'linear-gradient(135deg,#ffe2b8,#f6a04d)',base:6.0,miss:0.15,
+   lines:{start:'よろしくだワン！',take:'とれたワン！',lose:'はやいワン…！',ote:'まちがえたワン〜',win:'ボクの勝ちだワン！',defeat:'まいったワン！また遊んでほしいワン！'}},
+  {id:2,name:'もちうさ',emoji:'🐰',title:'おもちうさぎ',bg:'linear-gradient(135deg,#ffe4ef,#f48fb1)',base:4.5,miss:0.10,
+   lines:{start:'ぴょんぴょん、いくよ〜！',take:'ぴょん！とったよ！',lose:'わわっ、はやい〜！',ote:'あっ、まちがえちゃった…',win:'やったぁ！もちうさの勝ち〜！',defeat:'くやしい〜！でも楽しかったぴょん！'}},
+  {id:3,name:'コンタ',emoji:'🦊',title:'きつね忍者',bg:'linear-gradient(135deg,#ffd9c2,#ff7043)',base:3.2,miss:0.06,
+   lines:{start:'しのびの技、見せてやるでござる！',take:'忍法・はやどり！',lose:'む、むむっ…やるでござるな',ote:'ふ、ふかく…！',win:'拙者の勝ちでござる！',defeat:'見事でござる！弟子にしてほしいでござる！'}},
+  {id:4,name:'ライガ',emoji:'🐯',title:'かみなりタイガー',bg:'linear-gradient(135deg,#fff1a8,#f5b700)',base:2.0,miss:0.03,
+   lines:{start:'オレのいかずちの手を見ろ！',take:'ドカーン！いただき！',lose:'なにっ！？オレより速いだと…',ote:'くっ、雷がそれた！',win:'ガハハ！オレさまの勝ちだ！',defeat:'おまえ…本物だな。またいつでも来い！'}},
+  {id:5,name:'リュウオウ',emoji:'🐲',title:'伝説のかるた竜',bg:'linear-gradient(135deg,#c9f2e3,#2e9e7a)',base:1.0,miss:0.01,
+   lines:{start:'百首の主（ぬし）、リュウオウである。かかってくるがよい。',take:'見えておる。',lose:'ほう…人の子よ、やるな。',ote:'…竜も筆をあやまる、か。',win:'まだまだ修行が足りぬぞ。',defeat:'見事なり！そなたこそ新たなかるた名人じゃ！'}}
+];
+const GRADES = [
+  {id:'e4',label:'小学4年',goal:20, cpu:1,cards:3, mult:1.4,rate:0.75,solo:12,hint:true, shimo:true, q:10},
+  {id:'e5',label:'小学5年',goal:30, cpu:1,cards:3, mult:1.3,rate:0.8, solo:10,hint:true, shimo:true, q:10},
+  {id:'e6',label:'小学6年',goal:50, cpu:2,cards:5, mult:1.2,rate:0.8, solo:9, hint:true, shimo:true, q:20},
+  {id:'j1',label:'中学1年',goal:70, cpu:2,cards:5, mult:1.1,rate:0.85,solo:8, hint:true, shimo:true, q:20},
+  {id:'j2',label:'中学2年',goal:100,cpu:3,cards:5, mult:1.0,rate:0.85,solo:7, hint:false,shimo:true, q:20},
+  {id:'j3',label:'中学3年',goal:100,cpu:3,cards:10,mult:1.0,rate:0.9, solo:6, hint:false,shimo:false,q:50},
+  {id:'hs',label:'高校生', goal:100,cpu:4,cards:10,mult:0.9,rate:0.9, solo:5, hint:false,shimo:false,q:50},
+  {id:'ad',label:'大人',   goal:100,cpu:4,cards:10,mult:0.9,rate:0.9, solo:5, hint:false,shimo:false,q:50}
+];
+const gradeOf = id=>GRADES.find(g=>g.id===id)||GRADES[0];
+
+/* =========================================================
+   D. 保存データ（ブラウザ内に保存）
+   ========================================================= */
+const KEY='hyakunin_karuta_dojo_v2';
+function defaultSettings(){
+  const g=GRADES[0];
+  const s={grade:g.id,name:'',ruby:true,sound:true,rate:g.rate,voice:'',readShimo:g.shimo,showText:true,hint:g.hint,
+    otetsuki:true,karafuda:false,cards:g.cards,q:g.q,poolMode:'all',custom:[],cpu:g.cpu,cpuTimes:{},soloTime:g.solo};
+  CPUS.forEach(c=>s.cpuTimes[c.id]=+(c.base*g.mult).toFixed(1));
+  return s;
+}
+let DB={s:defaultSettings(),st:{},h:[],cr:{}};
+function load(){
+  try{ const raw=localStorage.getItem(KEY); if(raw){ const d=JSON.parse(raw); DB.s=Object.assign(defaultSettings(),d.s||{}); DB.st=d.st||{}; DB.h=d.h||[]; DB.cr=d.cr||{}; } }catch(e){}
+}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){} }
+const S=()=>DB.s;
+
+function applyGradePreset(){
+  const g=gradeOf(S().grade), s=S();
+  s.cpu=g.cpu; s.cards=g.cards; s.rate=g.rate; s.soloTime=g.solo; s.hint=g.hint; s.readShimo=g.shimo; s.q=g.q;
+  CPUS.forEach(c=>s.cpuTimes[c.id]=+(c.base*g.mult).toFixed(1));
+  save();
+}
+
+/* =========================================================
+   E. 学習データの分析
+   ========================================================= */
+function stat(id){ return DB.st[id]; }
+function rec(id,ok,t,ote){
+  const s=DB.st[id]||(DB.st[id]={seen:0,win:0,ote:0,tSum:0,tN:0,hist:[],last:0});
+  if(ote){ s.ote++; return; }
+  s.seen++; if(ok){s.win++; if(t!=null){s.tSum+=t; s.tN++;}}
+  s.hist.push(ok?1:0); if(s.hist.length>8) s.hist.shift();
+  s.last=Date.now();
+}
+function recentRate(s){ const h=s.hist.slice(-5); return h.length? h.reduce((a,b)=>a+b,0)/h.length : 0; }
+function avgT(s){ return s&&s.tN? s.tSum/s.tN/1000 : null; }
+/* 0:まだ 1:にがて 2:もう少し 3:おぼえた */
+function mastery(id){
+  const s=stat(id); if(!s||!s.seen) return 0;
+  const r=recentRate(s);
+  if(r>=0.8 && s.seen>=3 && s.hist.slice(-2).every(v=>v===1)) return 3;
+  if(r>=0.5) return 2;
+  return 1;
+}
+const M_LABEL=['まだ','にがて','もう少し','おぼえた'];
+const M_COLOR=['var(--m0)','var(--m1)','var(--m2)','var(--m3)'];
+function weakness(id){
+  const s=stat(id); if(!s||!s.seen) return 0;
+  const r=recentRate(s); const t=avgT(s);
+  const oteRate=s.ote/Math.max(1,s.seen);
+  return (1-r)*100 + Math.min(oteRate,1)*30 + (t==null?20:Math.min(t,10)*3);
+}
+
+/* =========================================================
+   F. 効果音（Web Audio）と読み上げ（Web Speech API）
+   ========================================================= */
+let AC=null;
+function ac(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==='suspended') AC.resume(); return AC; }
+function tone(freq,dur,type='sine',vol=.2,delay=0){
+  if(!S().sound) return; const a=ac(); if(!a) return;
+  const o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.value=freq;
+  const t=a.currentTime+delay; g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur);
+}
+function slap(){
+  if(!S().sound) return; const a=ac(); if(!a) return;
+  const len=a.sampleRate*.12, buf=a.createBuffer(1,len,a.sampleRate), d=buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);
+  const src=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain();
+  f.type='lowpass'; f.frequency.value=1800; g.gain.value=.7; src.buffer=buf; src.connect(f).connect(g).connect(a.destination); src.start();
+}
+const SFX={
+  take(){slap();},
+  good(){tone(880,.15,'triangle',.18);tone(1320,.25,'triangle',.18,.1);},
+  bad(){tone(180,.3,'sawtooth',.12);},
+  tick(){tone(660,.08,'square',.06);},
+  win(){[523,659,784,1047].forEach((f,i)=>tone(f,.3,'triangle',.18,i*.13));},
+  lose(){[392,330,262].forEach((f,i)=>tone(f,.35,'sine',.16,i*.18));}
+};
+
+let VOICES=[];
+function loadVoices(){
+  if(!('speechSynthesis' in window)) return;
+  VOICES=speechSynthesis.getVoices().filter(v=>/^ja/i.test(v.lang));
+  const sel=document.getElementById('voiceSelect');
+  sel.innerHTML='<option value="">おまかせ</option>'+VOICES.map(v=>`<option value="${esc(v.name)}">${esc(v.name)}</option>`).join('');
+  sel.value=S().voice||'';
+  if(!VOICES.length) sel.innerHTML='<option value="">（日本語の声が見つかりません）</option>';
+}
+function speak(text){
+  if(!('speechSynthesis' in window)) return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ja-JP'; u.rate=S().rate; u.pitch=1;
+    const v=VOICES.find(v=>v.name===S().voice); if(v) u.voice=v;
+    setTimeout(()=>speechSynthesis.speak(u),30);
+  }catch(e){}
+}
+function stopSpeak(){ try{ if('speechSynthesis' in window) speechSynthesis.cancel(); }catch(e){} }
+function unlockSpeech(){
+  try{ if('speechSynthesis' in window){ const u=new SpeechSynthesisUtterance(' '); u.volume=0; speechSynthesis.speak(u);} }catch(e){}
+  ac();
+}
+function poemSpeech(p,withShimo){
+  return p.kamiReadLines.join('、')+(withShimo?'。　'+p.shimoReadLines.join('、'):'');
+}
+
+/* =========================================================
+   G. 画面の切りかえ・共通
+   ========================================================= */
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+function show(id){
+  $$('.screen').forEach(e=>e.classList.toggle('active',e.id===id));
+  window.scrollTo({top:0});
+  if(id==='home') renderHome();
+  if(id==='stats') renderStats();
+  if(id==='zukan') renderZukan();
+}
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),2200); }
+function flash(msg,color){ const f=$('#flash'); f.textContent=msg; f.style.color=color||'#fff'; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); }
+function applyRuby(){ document.body.classList.toggle('noruby',!S().ruby); }
+function playerName(){ return 'あなた'; }
+
+/* ホーム */
+function renderHome(){
+  const s=S(), g=gradeOf(s.grade);
+  $('#gradeSelect').innerHTML=GRADES.map(x=>`<option value="${x.id}">${x.label}</option>`).join('');
+  $('#gradeSelect').value=s.grade;
+  const learned=POEMS.filter(p=>mastery(p.id)===3).length;
+  $('#goalText').innerHTML=`🎯 ${g.label}の目標：おぼえた句 <b style="color:var(--matcha)">${learned}</b> / ${g.goal} 首 ${learned>=g.goal?'🎉 たっせい！':''}`;
+  $('#goalBar').style.width=Math.min(100,learned/g.goal*100)+'%';
+  $('#rivalsMini').innerHTML=CPUS.map(c=>`<span class="mini" title="${c.name}" style="background:${c.bg}">${c.emoji}</span>`).join('');
+}
+
+/* =========================================================
+   H. 準備画面
+   ========================================================= */
+let MODE='vs';
+const MODE_TITLE={vs:'⚔️ 対戦の準備',train:'🔥 にがて特訓の準備',kima:'⚡ 決まり字道場の準備'};
+function openSetup(mode){
+  MODE=mode; $('#setupTitle').textContent=MODE_TITLE[mode];
+  $('#cpuPanel').style.display=mode==='vs'?'':'none';
+  $('#soloPanel').style.display=mode==='vs'?'none':'';
+  $('#swKara').style.display=mode==='kima'?'none':'';
+  $('#swShimo').style.display=mode==='kima'?'none':'';
+  renderSetup(); show('setup');
+}
+function cpuRecord(id){ return DB.cr[id]||{w:0,l:0,d:0}; }
+function renderSetup(){
+  const s=S();
+  $('#cpuList').innerHTML=CPUS.map(c=>{
+    const r=cpuRecord(c.id);
+    return `<div class="cpu-card ${s.cpu===c.id?'on':''}" data-cpu="${c.id}">
+      <span class="lv">Lv.${c.id}</span>${r.w>0?'<span class="medal" title="勝ったことがある">🏅</span>':''}
+      <div class="avatar" style="background:${c.bg}">${c.emoji}</div>
+      <div class="nm">${c.name}</div><div class="tt">${c.title}</div>
+      <div class="stars">${'★'.repeat(c.id)}${'☆'.repeat(5-c.id)}</div>
+      <div class="rec">${r.w}勝 ${r.l}敗${r.d?` ${r.d}分`:''}</div>
+      <div class="tm">取るまで <span>${(+s.cpuTimes[c.id]).toFixed(1)}秒</span></div>
+      <input type="range" min="0.6" max="12" step="0.1" value="${s.cpuTimes[c.id]}" data-cputime="${c.id}">
+    </div>`;}).join('');
+  setSeg('#poolSeg',s.poolMode); setSeg('#cardsSeg',String(s.cards)); setSeg('#qSeg',String(s.q));
+  $('#customCount').textContent=s.custom.length;
+  const poolSize=s.poolMode==='all'?100:s.custom.length;
+  $('#poolNote').textContent = (MODE==='train'?'にがてな句・まだ取っていない句ほど多く出ます。':'')+
+    `出題の範囲：${poolSize}首 → 今回読むのは ${Math.min(s.q,poolSize)}首`;
+  $('#soloTime').value=s.soloTime; $('#soloTimeLabel').textContent=(+s.soloTime).toFixed(1)+' 秒';
+  $$('#setup .switch input[data-k]').forEach(i=>i.checked=!!s[i.dataset.k]);
+}
+function setSeg(sel,v){ $$(sel+' button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); }
+
+/* 句えらび */
+function renderPicker(){
+  const set=new Set(S().custom);
+  $('#pickGrid').innerHTML=POEMS.map(p=>`<label class="${set.has(p.id)?'on':''}" style="border-left:6px solid ${M_COLOR[mastery(p.id)]}"><input type="checkbox" value="${p.id}" ${set.has(p.id)?'checked':''}><span class="n">${p.id}</span><span>${esc(p.kamiPlain.split(' ')[0])}</span></label>`).join('');
+  $('#pickCount').textContent=set.size;
+}
+const QUICK=[
+  ['全部えらぶ',()=>POEMS.map(p=>p.id)],['全部はずす',()=>[]],
+  ['1〜20',()=>range(1,20)],['21〜40',()=>range(21,40)],['41〜60',()=>range(41,60)],['61〜80',()=>range(61,80)],['81〜100',()=>range(81,100)],
+  ['にがて',()=>POEMS.filter(p=>mastery(p.id)===1).map(p=>p.id)],
+  ['まだの句',()=>POEMS.filter(p=>mastery(p.id)===0).map(p=>p.id)],
+  ['一字決まり（むすめふさほせ）',()=>[87,18,57,22,70,81,77]]
+];
+function range(a,b){ const r=[]; for(let i=a;i<=b;i++) r.push(i); return r; }
+
+/* =========================================================
+   I. ゲーム本体
+   ========================================================= */
+let G=null;
+const LEAD=350;           // 読み上げが始まるまでの待ち（ミリ秒）
+const PAUSE=3, SPAUSE=4;  // 句の区切りの間（文字数ぶん）
+const msPerChar=()=>150/S().rate;
+
+function clearTimers(){ if(!G) return; G.timers.forEach(t=>{clearTimeout(t);clearInterval(t);}); G.timers=[]; }
+function later(fn,ms){ const t=setTimeout(fn,ms); G.timers.push(t); return t; }
+
+function buildPool(){
+  const s=S(); let ids=s.poolMode==='all'?POEMS.map(p=>p.id):s.custom.slice();
+  return ids;
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function weightedPick(ids,n,wfn){
+  const arr=ids.map(id=>({id,w:Math.max(.1,wfn(id))})); const out=[];
+  while(out.length<n&&arr.length){ const tot=arr.reduce((a,b)=>a+b.w,0); let r=Math.random()*tot, i=0;
+    for(;i<arr.length;i++){ r-=arr[i].w; if(r<=0) break; } i=Math.min(i,arr.length-1); out.push(arr[i].id); arr.splice(i,1); }
+  return out;
+}
+
+function startGame(){
+  const s=S(); const pool=buildPool();
+  if(!pool.length){ toast('出題する句を1首以上えらんでね'); return; }
+  unlockSpeech();
+  const Q=Math.min(s.q,pool.length);
+  let deck = MODE==='train' ? weightedPick(pool,Q,id=>{const st=stat(id); return (!st||!st.seen)?3:1+weakness(id)/12;})
+                            : shuffle(pool.slice()).slice(0,Q);
+  const cpu = MODE==='vs'? CPUS.find(c=>c.id===s.cpu)||CPUS[0] : null;
+  G={mode:MODE,cpu,Q,queue:deck.slice(),field:[],readCount:0,karaCount:0,target:null,karafuda:false,phase:'idle',
+     t0:0,timers:[],pLock:false,cLock:false,me:0,op:0,combo:0,maxCombo:0,ote:0,cpuOte:0,results:[],takenIdx:null,
+     opts:{cards:s.cards,otetsuki:s.otetsuki,karafuda:s.karafuda&&MODE!=='kima',readShimo:s.readShimo&&MODE!=='kima',showText:s.showText,hint:s.hint,solo:s.soloTime}};
+  // 場に札をならべる
+  const n=G.opts.cards;
+  while(G.field.length<n && G.queue.length) G.field.push({id:G.queue.shift(),deck:true});
+  while(G.field.length<n){ const d=pickDummy(); if(d==null) break; G.field.push({id:d,deck:false}); }
+  shuffle(G.field);
+  // スコアボード
+  $('#meName').textContent=playerName();
+  if(cpu){
+    $('#opSide').style.visibility='visible';
+    $('#opAvatar').style.background=cpu.bg; $('#opAvatar').textContent=cpu.emoji; $('#opName').textContent=cpu.name;
+  }else{
+    $('#opSide').style.visibility='visible';
+    $('#opAvatar').style.background='linear-gradient(135deg,#fff3cc,#f2c14e)'; $('#opAvatar').textContent='🔥';
+    $('#opName').textContent='コンボ';
+  }
+  updateScore(); show('game'); renderField();
+  hideSheet();
+  $('#readArea').innerHTML='<div class="listen">札をならべています…</div>';
+  $('#tbarFill').style.transition='none'; $('#tbarFill').style.width='100%'; $('#tbarLabel').innerHTML='&nbsp;';
+  if(cpu) later(()=>say(cpu.lines.start,2200),300);
+  // カウントダウン
+  const cd=$('#countdown'); let c=3; $('#cdNum').textContent=c; cd.classList.add('show'); SFX.tick();
+  const iv=setInterval(()=>{ c--; if(c<=0){ clearInterval(iv); cd.classList.remove('show'); nextRound(); } else { $('#cdNum').textContent=c; const b=$('#cdNum'); b.style.animation='none'; void b.offsetWidth; b.style.animation=''; SFX.tick(); } },900);
+  G.timers.push(iv);
+}
+function pickDummy(){
+  const used=new Set([...G.field.map(f=>f.id),...G.queue]);
+  const c=POEMS.filter(p=>!used.has(p.id)); if(!c.length) return null;
+  return c[Math.floor(Math.random()*c.length)].id;
+}
+function cols(){
+  const n=G.field.length, narrow=window.innerWidth<600;
+  if(n<=3) return 3; if(n<=5) return narrow?3:5; return narrow?4:5;
+}
+function renderField(){
+  const f=$('#field');
+  f.innerHTML=G.field.map((c,i)=>{const p=P(c.id);
+    return `<div class="card" data-i="${i}"><span class="num">${i<9?i+1:(i===9?0:'')}</span><div class="ctext">${p.shimo.map(l=>`<div class="cl">${lineHTML(l)}</div>`).join('')}</div></div>`;}).join('');
+  fitCards();
+}
+function fitCards(){
+  if(!G) return; const f=$('#field'); const cards=$$('#field .card'); if(!cards.length) return;
+  const c=cols(), gap=10, W=f.clientWidth-8;
+  const maxH=window.innerHeight*0.62/Math.ceil(cards.length/c);
+  let w=Math.min(160,(W-gap*(c-1))/c, (maxH-10)*52/73);
+  w=Math.max(60,Math.floor(w)); const h=w*73/52;
+  cards.forEach(el=>{el.style.width=w+'px';});
+  let maxG=0; G.field.forEach(fc=>P(fc.id).shimo.forEach(l=>{maxG=Math.max(maxG,l.reduce((a,t)=>a+[...t.b].length,0));}));
+  const ruby=S().ruby;
+  const fs=Math.max(9,Math.min((h-18)/(maxG+1.6),(w-16)/(ruby?4.4:3.6),30));
+  f.style.setProperty('--cfs',fs.toFixed(1)+'px');
+}
+function updateScore(){
+  $('#mePts').textContent=G.me;
+  $('#opPts').textContent=G.cpu?G.op:G.combo;
+  $('#roundNo').textContent=Math.min(G.phase==='done'?G.readCount:G.readCount+1,G.Q);
+  $('#roundOf').textContent=`/ ${G.Q} 首`;
+}
+function say(text,ms){ const b=$('#bubble'); b.textContent=text; b.classList.add('show'); clearTimeout(say._t); say._t=setTimeout(()=>b.classList.remove('show'),ms||1800); }
+
+/* 読み上げの「時間表」を作る */
+function buildReading(p,kimaOnly){
+  const parts=[]; let pos=0, k=0; const kmap=[]; const kimaLen=[...p.kima].length;
+  const mk=(lines,isShimo)=>{
+    const html=[];
+    lines.forEach((l,li)=>{
+      let lh='';
+      l.forEach(t=>{
+        const len=[...t.r].length; const kIdx=isShimo?999:k;
+        if(kimaOnly && kIdx>=kimaLen) return;
+        const isK=!isShimo && kIdx<kimaLen;
+        lh+=`<span class="tk wait${isK?' k':''}" data-s="${pos}">${tokHTML(t)}</span>`;
+        if(!isShimo){ for(let j=0;j<len;j++){ kmap[k]=pos+j; k++; } }
+        pos+=len;
+      });
+      if(lh) html.push(`<span class="ln">${lh}</span>`);
+      if(!(kimaOnly)) pos+=PAUSE;
+    });
+    return html.join('');
+  };
+  let html=`<div class="read-text${kimaOnly?' big':''}">`+mk(p.kami,false);
+  if(G.opts.readShimo && !kimaOnly){ pos+=SPAUSE; html+=`<span class="sep"></span><span class="shimo-part">${mk(p.shimo,true)}</span>`; }
+  html+='</div>';
+  const endPos = kimaOnly ? kimaLen : pos;
+  return {html,kmap,endPos};
+}
+/* 場の札の中で、どこまで聞けば決まるか（CPUがこれより早くは取れない） */
+function decisiveIndex(p){
+  let d=1;
+  G.field.forEach(f=>{ if(f.id===p.id) return; const o=P(f.id).kamiR; let i=0; while(i<o.length&&i<p.kamiR.length&&o[i]===p.kamiR[i]) i++; d=Math.max(d,i+1); });
+  return Math.min(d,p.kamiR.length);
+}
+
+function nextRound(){
+  if(!G) return;
+  hideSheet();
+  // 前の回に取られた札を入れかえる
+  if(G.takenIdx!=null){
+    const i=G.takenIdx; G.takenIdx=null;
+    let nid=null, isDeck=false;
+    if(G.queue.length){ nid=G.queue.shift(); isDeck=true; }
+    else if(G.field.some((f,j)=>j!==i&&f.deck&&!f.read)){ G.field[i]={id:-1,deck:false}; nid=pickDummy(); }
+    if(nid!=null) G.field[i]={id:nid,deck:isDeck}; else G.field.splice(i,1);
+    renderField();
+  }else{ $$('#field .card').forEach(el=>el.classList.remove('wrong-mark','fade','answer')); }
+  if(G.readCount>=G.Q){ finish(); return; }
+  updateScore();
+  const live=G.field.filter(f=>f.deck&&!f.read);
+  if(!live.length){ finish(); return; }
+  // 空札にするか
+  G.karafuda=false;
+  if(G.opts.karafuda && G.karaCount<Math.ceil(G.Q*0.2) && Math.random()<0.15){
+    const used=new Set([...G.field.map(f=>f.id),...G.queue]);
+    const c=POEMS.filter(p=>!used.has(p.id));
+    if(c.length){ G.karafuda=true; G.target=c[Math.floor(Math.random()*c.length)].id; }
+  }
+  if(!G.karafuda) G.target=live[Math.floor(Math.random()*live.length)].id;
+  G.pLock=false; G.cLock=false; G.phase='reading';
+  const p=P(G.target); const kimaOnly=G.mode==='kima';
+  const R=buildReading(p,kimaOnly); G.R=R;
+  const ms=msPerChar();
+  $('#readerLbl').textContent=kimaOnly?'決まり字':'読み札'; $('#readerLbl').classList.remove('kara');
+  $('#readArea').innerHTML = (G.opts.showText||kimaOnly) ? R.html : '<div class="listen"><span class="wave">🔊</span> よく聞いて…！</div>'+`<div style="display:none">${R.html}</div>`;
+  // 読み上げ（音声）
+  const text = kimaOnly ? p.kamiR.slice(0,[...p.kima].length) : poemSpeech(p,G.opts.readShimo);
+  speak(text);
+  G.t0=performance.now()+LEAD;
+  // 文字を少しずつ出す（音声とは別のタイマーで動かす）
+  const tks=$$('#readArea .tk'); const hint=G.opts.hint||kimaOnly;
+  const iv=setInterval(()=>{
+    const pos=(performance.now()-G.t0)/ms;
+    tks.forEach(el=>{ if(el.classList.contains('wait') && +el.dataset.s<=pos){ el.classList.remove('wait'); if(hint&&el.classList.contains('k')) el.classList.add('kima'); } });
+  },40);
+  G.timers.push(iv);
+  const endTime=LEAD+R.endPos*ms;
+  // CPU・制限時間
+  let limit;
+  if(G.cpu && !G.karafuda){
+    const base=S().cpuTimes[G.cpu.id]*1000*(0.88+Math.random()*0.24);
+    const d=decisiveIndex(p); const dt=LEAD+((R.kmap[d-1]||0)+1)*ms+220+Math.random()*200;
+    limit=Math.max(base,dt);
+    later(cpuAct,limit);
+    later(()=>resolve('none'),Math.max(limit,endTime)+5000);
+    runBar(limit,`${G.cpu.name}が取るまで`);
+  }else if(G.cpu && G.karafuda){
+    if(Math.random()<G.cpu.miss*2) later(()=>cpuWrong(true),Math.min(endTime,S().cpuTimes[G.cpu.id]*1000));
+    later(()=>resolve('kara'),endTime+1500);
+    runBar(endTime+1500,'');
+  }else{
+    limit=G.karafuda? endTime+1500 : G.opts.solo*1000+LEAD;
+    later(()=>resolve(G.karafuda?'kara':'timeout'),limit);
+    runBar(limit,G.karafuda?'':'制限時間');
+  }
+}
+function runBar(ms,label){
+  const f=$('#tbarFill'); f.style.transition='none'; f.style.width='100%'; void f.offsetWidth;
+  f.style.transition=`width ${ms}ms linear`; f.style.width='0%';
+  $('#tbarLabel').innerHTML=label?`⏱️ ${label}`:'&nbsp;';
+}
+function stopBar(){ const f=$('#tbarFill'); const w=getComputedStyle(f).width; f.style.transition='none'; f.style.width=w; }
+
+function cardEl(i){ return document.querySelector(`#field .card[data-i="${i}"]`); }
+function tag(el,txt,cls){ if(!el) return; const t=document.createElement('span'); t.className='tag '+(cls||''); t.textContent=txt; el.appendChild(t); }
+
+function pick(i){
+  if(!G||G.phase!=='reading'||G.pLock) return;
+  const f=G.field[i]; if(!f) return;
+  const t=Math.max(50,performance.now()-G.t0);
+  if(!G.karafuda && f.id===G.target){ resolve('player',t,i); return; }
+  // まちがい（おてつき）
+  SFX.bad(); G.ote++;
+  const el=cardEl(i); if(el){ el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong','wrong-mark'); }
+  if(!G.karafuda) rec(G.target,false,null,true);
+  if(G.opts.otetsuki){
+    G.pLock=true;
+    if(G.cpu){ G.me=Math.max(0,G.me-1); flash('おてつき！ −1','#ffd0c8'); }
+    else flash('おてつき！','#ffd0c8');
+    G.combo=0; updateScore();
+    if(!G.cpu && !G.karafuda){ resolve('miss'); return; }
+  }else{
+    G.pLock=true; flash('ちがうよ！','#ffd0c8');
+    later(()=>{ if(G&&G.phase==='reading') G.pLock=false; },1000);
+  }
+}
+function cpuAct(){
+  if(!G||G.phase!=='reading'||G.cLock) return;
+  if(Math.random()<G.cpu.miss && G.field.length>1){ cpuWrong(false); return; }
+  resolve('cpu');
+}
+function cpuWrong(isKara){
+  if(!G||G.phase!=='reading') return;
+  const cands=G.field.map((f,i)=>({f,i})).filter(x=>x.f.id!==G.target);
+  if(!cands.length) return;
+  const c=cands[Math.floor(Math.random()*cands.length)];
+  const el=cardEl(c.i); if(el){ el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong'); }
+  say(G.cpu.lines.ote); G.cpuOte++;
+  if(G.opts.otetsuki){ G.cLock=true; G.op=Math.max(0,G.op-1); updateScore(); flash(`${G.cpu.name} おてつき！`,'#d6f5d0'); }
+  else if(!isKara){ later(()=>{ if(G&&G.phase==='reading') resolve('cpu'); },1500); }
+  stopBar();
+}
+
+function resolve(who,t,idx){
+  if(!G||G.phase!=='reading') return;
+  G.phase='done'; clearTimers(); stopSpeak(); stopBar();
+  $$('#readArea .tk').forEach(el=>{ el.classList.remove('wait'); if((G.opts.hint||G.mode==='kima')&&el.classList.contains('k')) el.classList.add('kima'); });
+  const hidden=$('#readArea > div[style*="display:none"]'); if(hidden){ $('#readArea').innerHTML=G.R.html; $$('#readArea .tk').forEach(el=>el.classList.remove('wait')); }
+  const p=P(G.target);
+  const i = G.karafuda? -1 : G.field.findIndex(f=>f.id===G.target);
+  const el = i>=0? cardEl(i):null;
+  let msg='', cls='neutral';
+  if(who==='player'){
+    const sec=t/1000;
+    if(G.cpu) G.me++; else G.me++;
+    G.combo++; G.maxCombo=Math.max(G.maxCombo,G.combo);
+    rec(G.target,true,t); SFX.take(); SFX.good();
+    if(el){ el.classList.add('me'); tag(el,`${sec.toFixed(2)}秒`); }
+    msg = sec<1.5?`⚡ はやい！ ${sec.toFixed(2)}秒`:`🎉 とった！ ${sec.toFixed(2)}秒`; cls='good';
+    flash(sec<1.5?'はやい！':'とった！');
+    if(G.cpu){ const a=$('#opAvatar'); a.classList.remove('pulse'); void a.offsetWidth; a.classList.add('pulse'); say(G.cpu.lines.lose); }
+    G.results.push({id:G.target,ok:true,t});
+  }else if(who==='cpu'){
+    G.op++; G.combo=0; rec(G.target,false); SFX.take(); SFX.bad();
+    if(el){ el.classList.add('cpu'); tag(el,G.cpu.name,'cpu'); }
+    msg=`${G.cpu.emoji} ${G.cpu.name}に取られた…`; cls='bad'; say(G.cpu.lines.take);
+    const a=$('#opAvatar'); a.classList.remove('pulse'); void a.offsetWidth; a.classList.add('pulse');
+    G.results.push({id:G.target,ok:false});
+  }else if(who==='kara'){
+    G.karaCount++; msg='🍃 空札でした！（場にない札）'; cls='neutral';
+    $('#readerLbl').textContent='空札'; $('#readerLbl').classList.add('kara');
+    if(!G.pLock) { msg+=' よくがまんできたね！'; cls='good'; }
+  }else{
+    G.combo=0; rec(G.target,false); SFX.bad();
+    if(el){ el.classList.add('answer'); tag(el,'正解はこれ','miss'); }
+    msg = who==='timeout'?'⏰ 時間切れ…':(who==='miss'?'😣 おてつき…':'だれも取れませんでした');
+    cls='bad'; G.results.push({id:G.target,ok:false});
+  }
+  if(who!=='kara'){
+    G.readCount++;
+    if(i>=0){ G.field[i].read=true; G.takenIdx=i; }
+    $$('#field .card').forEach((c,j)=>{ if(j!==i) c.classList.add('fade'); });
+  }
+  updateScore(); save();
+  showSheet(p,msg,cls,who==='kara');
+}
+
+function showSheet(p,msg,cls,isKara){
+  const st=stat(p.id); const m=mastery(p.id);
+  const last=G.readCount>=G.Q;
+  $('#sheetIn').innerHTML=`
+    <div class="rp-msg ${cls}">${msg}</div>
+    <div class="rp-meta">第${p.id}番　${esc(p.author)}（${esc(p.authorYomi)}）</div>
+    <div class="poem-full">${poemHTML(p)}</div>
+    <div style="text-align:center"><span class="chip kima">決まり字「${p.kima}」</span>${isKara?'':`<span class="chip" style="background:${M_COLOR[m]};color:#3a2f22">${M_LABEL[m]}</span>`}${st&&st.seen?`<span class="chip">正解率 ${Math.round(st.win/st.seen*100)}%</span>`:''}</div>
+    <div class="meaning">💡 <b>意味</b>：${esc(p.meaning)}</div>
+    <div class="actions">
+      <button class="btn ghost small" id="sheetListen">🔊 もう一度聞く</button>
+      <button class="btn shu" id="nextBtn">${last?'けっかを見る 🏁':'つぎへ ▶'}</button>
+    </div>`;
+  $('#sheet').classList.add('show');
+  $('#nextBtn').onclick=()=>{ stopSpeak(); nextRound(); };
+  $('#sheetListen').onclick=()=>speak(poemSpeech(p,true));
+}
+function hideSheet(){ $('#sheet').classList.remove('show'); }
+
+function finish(){
+  if(!G) return; clearTimers(); stopSpeak(); hideSheet(); G.phase='end';
+  const ok=G.results.filter(r=>r.ok), times=ok.map(r=>r.t/1000);
+  const avg=times.length?times.reduce((a,b)=>a+b,0)/times.length:null;
+  const acc=G.results.length?ok.length/G.results.length:0;
+  let hero='';
+  const entry={d:Date.now(),mode:G.mode,q:G.results.length,ok:ok.length,avg};
+  if(G.cpu){
+    const r=DB.cr[G.cpu.id]||(DB.cr[G.cpu.id]={w:0,l:0,d:0});
+    let res, line;
+    if(G.me>G.op){res='win'; r.w++; line=G.cpu.lines.defeat; SFX.win();}
+    else if(G.me<G.op){res='lose'; r.l++; line=G.cpu.lines.win; SFX.lose();}
+    else {res='draw'; r.d++; line='いい勝負だった！また戦おう！'; SFX.win();}
+    entry.cpu=G.cpu.id; entry.me=G.me; entry.op=G.op; entry.res=res;
+    hero=`<p class="big ${res}">${res==='win'?'勝ち！':res==='lose'?'負け…':'引き分け'}</p>
+      <div class="vs-score"><span style="color:var(--ai)">${G.me}</span> − <span style="color:var(--shu)">${G.op}</span></div>
+      <div class="avatar" style="background:${G.cpu.bg};width:84px;height:84px;font-size:3rem">${G.cpu.emoji}</div>
+      <p style="font-weight:900;margin:6px 0 0">${G.cpu.name}「${line}」</p>`;
+  }else{
+    const rank= acc>=0.9&&avg!=null&&avg<3?'S':acc>=0.8?'A':acc>=0.6?'B':'C';
+    entry.rank=rank;
+    hero=`<p style="font-weight:900;color:var(--ink-soft);margin:0 0 8px">${G.mode==='kima'?'⚡ 決まり字道場':'🔥 にがて特訓'} けっか</p>
+      <div class="rank">${rank}</div>
+      <p style="font-weight:900;font-size:1.3rem;margin:14px 0 0">${ok.length} / ${G.results.length} 首 せいかい！</p>
+      <p class="note">${rank==='S'?'すばらしい！名人級！':rank==='A'?'すごい！あと少しでS！':rank==='B'?'いい調子！くり返すともっと速くなるよ':'だいじょうぶ、ふくしゅうすれば必ずおぼえられるよ！'}</p>`;
+    acc>=0.6?SFX.win():SFX.lose();
+  }
+  DB.h.unshift(entry); DB.h=DB.h.slice(0,30); save();
+  $('#resultHero').innerHTML=hero;
+  const fastest=ok.slice().sort((a,b)=>a.t-b.t)[0];
+  $('#resultKpis').innerHTML=`
+    <div class="kpi"><b>${Math.round(acc*100)}%</b><small>正解率</small></div>
+    <div class="kpi"><b>${avg!=null?avg.toFixed(2):'-'}</b><small>平均タイム（秒）</small></div>
+    <div class="kpi"><b>${G.maxCombo}</b><small>最大コンボ</small></div>
+    <div class="kpi"><b>${G.ote}</b><small>おてつき</small></div>
+    <div class="kpi"><b>${fastest?(fastest.t/1000).toFixed(2):'-'}</b><small>いちばん速い（秒）${fastest?`<br>第${fastest.id}番`:''}</small></div>`;
+  const miss=[...new Set(G.results.filter(r=>!r.ok).map(r=>r.id))];
+  G.review=miss;
+  $('#reviewPanel').style.display=miss.length?'':'none';
+  $('#reviewList').innerHTML=miss.map(id=>pitemHTML(id)).join('');
+  show('result');
+}
+function pitemHTML(id,extra){
+  const p=P(id), m=mastery(id), s=stat(id);
+  const rate=s&&s.seen?Math.round(s.win/s.seen*100)+'%':'-';
+  const t=avgT(s);
+  return `<div class="pitem"><div class="no" style="background:${M_COLOR[m]};color:#3a2f22">${id}</div>
+    <div class="tx">${poemHTML(p)}</div>
+    <div class="st">${extra||''}正解率 ${rate}<br>平均 ${t!=null?t.toFixed(1)+'秒':'-'}<br>おてつき ${s?s.ote:0}</div></div>`;
+}
+function quitGame(){
+  if(G&&G.phase!=='end'&&!confirm('対戦をやめてホームにもどりますか？（ここまでの記録は保存されます）')) return;
+  clearTimers(); stopSpeak(); hideSheet(); G=null; show('home');
+}
+
+/* =========================================================
+   J. 成績画面・図鑑
+   ========================================================= */
+function renderStats(){
+  const all=POEMS.map(p=>p.id);
+  const ms=all.map(mastery);
+  const seen=ms.filter(m=>m>0).length, learned=ms.filter(m=>m===3).length;
+  let tS=0,tN=0,win=0,cnt=0,ote=0; all.forEach(id=>{const s=stat(id); if(s){tS+=s.tSum;tN+=s.tN;win+=s.win;cnt+=s.seen;ote+=s.ote;}});
+  const vs=Object.values(DB.cr).reduce((a,r)=>({w:a.w+r.w,l:a.l+r.l}),{w:0,l:0});
+  $('#statKpis').innerHTML=`
+    <div class="kpi"><b>${learned}</b><small>おぼえた句</small></div>
+    <div class="kpi"><b>${seen}</b><small>ちょうせんした句</small></div>
+    <div class="kpi"><b>${cnt?Math.round(win/cnt*100):0}%</b><small>全体の正解率</small></div>
+    <div class="kpi"><b>${tN?(tS/tN/1000).toFixed(2):'-'}</b><small>平均タイム（秒）</small></div>
+    <div class="kpi"><b>${vs.w}勝${vs.l}敗</b><small>CPU対戦</small></div>`;
+  $('#grid100').innerHTML=all.map((id,i)=>`<button style="background:${M_COLOR[ms[i]]}" data-z="${id}" title="第${id}番 ${M_LABEL[ms[i]]}">${id}</button>`).join('');
+  const weak=all.filter(id=>{const s=stat(id); return s&&s.seen&&(recentRate(s)<1||s.ote>0);}).sort((a,b)=>weakness(b)-weakness(a)).slice(0,10);
+  DB._weak=weak;
+  $('#weakList').innerHTML=weak.length?weak.map((id,i)=>pitemHTML(id,`<b style="color:var(--shu)">${i+1}位</b><br>`)).join(''):'<p class="note">まだデータがありません。対戦や特訓をすると、ここに にがてな句が出てきます。</p>';
+  $('#weakTrain').style.display=weak.length?'':'none';
+  $('#cpuRecList').innerHTML=CPUS.map(c=>{const r=cpuRecord(c.id); return `<div class="pitem"><div class="avatar" style="background:${c.bg};width:44px;height:44px;font-size:1.5rem;margin:0;border-width:2px">${c.emoji}</div><div style="flex:1;font-weight:900">Lv.${c.id} ${c.name}<br><small class="note">${c.title}</small></div><div style="font-weight:900">${r.w}勝 ${r.l}敗${r.d?` ${r.d}分`:''} ${r.w?'🏅':''}</div></div>`;}).join('');
+  $('#histList').innerHTML=DB.h.length?DB.h.slice(0,10).map(h=>{
+    const d=new Date(h.d); const ds=`${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    const c=h.cpu?CPUS.find(x=>x.id===h.cpu):null;
+    const title=c?`${c.emoji} ${c.name}と対戦　${h.me}−${h.op} ${h.res==='win'?'勝ち':h.res==='lose'?'負け':'引き分け'}`:`${h.mode==='kima'?'⚡ 決まり字道場':'🔥 にがて特訓'}　ランク${h.rank}`;
+    return `<div class="pitem"><div style="flex:1;font-weight:700">${title}<br><small class="note">${ds}　正解 ${h.ok}/${h.q}${h.avg!=null?`　平均 ${h.avg.toFixed(2)}秒`:''}</small></div></div>`;}).join(''):'<p class="note">まだ記録がありません。</p>';
+}
+function renderZukan(){
+  const q=($('#zSearch').value||'').trim(); const f=$('#zFilter').value;
+  const list=POEMS.filter(p=>{
+    if(f!=='all'&&mastery(p.id)!==+f) return false;
+    if(!q) return true;
+    if(/^\d+$/.test(q)) return p.id===+q;
+    return (p.kamiPlain+p.shimoPlain+p.kamiR+p.shimoR+p.author+p.authorYomi+p.meaning).replace(/\s/g,'').includes(q.replace(/\s/g,''));
+  });
+  $('#zList').innerHTML=list.length?list.map(p=>{const m=mastery(p.id), s=stat(p.id), t=avgT(s);
+    return `<div class="zitem" id="z${p.id}">
+      <div class="hd"><span class="no">第${p.id}番</span><span>${esc(p.author)}</span><span class="au">（${esc(p.authorYomi)}）</span>
+        <span class="badge" style="background:${M_COLOR[m]}">${M_LABEL[m]}</span>
+        <button class="btn ghost small" style="margin-left:auto" data-listen="${p.id}">🔊 聞く</button></div>
+      <div class="poem-full">${poemHTML(p)}</div>
+      <span class="chip kima">決まり字「${p.kima}」</span>
+      <div class="meaning">💡 ${esc(p.meaning)}</div>
+      <div class="zstat">${s&&s.seen?`挑戦 ${s.seen}回／正解率 ${Math.round(s.win/s.seen*100)}%／平均 ${t!=null?t.toFixed(2)+'秒':'-'}／おてつき ${s.ote}回`:'まだ挑戦していません'}</div>
+    </div>`;}).join(''):'<p class="note" style="text-align:center">見つかりませんでした。</p>';
+}
+
+/* =========================================================
+   K. ボタンなどのイベント
+   ========================================================= */
+function bind(){
+  document.addEventListener('click',e=>{
+    const go=e.target.closest('[data-go]'); if(go){ if(G&&$('#game').classList.contains('active')) return; show(go.dataset.go); return; }
+    const md=e.target.closest('[data-mode]'); if(md){ openSetup(md.dataset.mode); return; }
+    const cl=e.target.closest('[data-close]'); if(cl){ $('#'+cl.dataset.close).classList.remove('show'); if(cl.dataset.close==='pickerModal') renderSetup(); return; }
+    const cpu=e.target.closest('.cpu-card'); if(cpu && !e.target.matches('input')){ S().cpu=+cpu.dataset.cpu; save(); renderSetup(); return; }
+    const z=e.target.closest('[data-z]'); if(z){ show('zukan'); $('#zSearch').value=z.dataset.z; renderZukan(); return; }
+    const li=e.target.closest('[data-listen]'); if(li){ unlockSpeech(); speak(poemSpeech(P(+li.dataset.listen),true)); return; }
+    const card=e.target.closest('#field .card'); if(card){ pick(+card.dataset.i); return; }
+  });
+  // 準備画面のスイッチ・ボタン
+  $('#cpuList').addEventListener('input',e=>{ const id=e.target.dataset.cputime; if(!id) return; S().cpuTimes[id]=+e.target.value; e.target.parentElement.querySelector('.tm span').textContent=(+e.target.value).toFixed(1)+'秒'; save(); });
+  $$('.switch input[data-k]').forEach(i=>i.addEventListener('change',()=>{ S()[i.dataset.k]=i.checked; save(); if(i.dataset.k==='ruby') applyRuby(); }));
+  $('#poolSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S().poolMode=b.dataset.v; save(); if(b.dataset.v==='custom'&&!S().custom.length){ openPicker(); } renderSetup(); });
+  $('#cardsSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S().cards=+b.dataset.v; save(); renderSetup(); });
+  $('#qSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; S().q=+b.dataset.v; save(); renderSetup(); });
+  $('#soloTime').addEventListener('input',e=>{ S().soloTime=+e.target.value; $('#soloTimeLabel').textContent=(+e.target.value).toFixed(1)+' 秒'; save(); });
+  $('#openPicker').addEventListener('click',openPicker);
+  $('#quickBtns').innerHTML=QUICK.map((q,i)=>`<button data-q="${i}">${q[0]}</button>`).join('');
+  $('#quickBtns').addEventListener('click',e=>{ const b=e.target.closest('[data-q]'); if(!b) return; const ids=QUICK[+b.dataset.q][1]();
+    if(+b.dataset.q<=1) S().custom=ids; else S().custom=[...new Set([...S().custom,...ids])].sort((a,b)=>a-b);
+    if(+b.dataset.q>1 && !ids.length) toast('あてはまる句がありません');
+    save(); renderPicker(); });
+  $('#pickGrid').addEventListener('change',e=>{ const id=+e.target.value; const set=new Set(S().custom); e.target.checked?set.add(id):set.delete(id); S().custom=[...set].sort((a,b)=>a-b); e.target.parentElement.classList.toggle('on',e.target.checked); $('#pickCount').textContent=set.size; save(); });
+  $('#startBtn').addEventListener('click',startGame);
+  $('#quitBtn').addEventListener('click',quitGame);
+  $('#againBtn').addEventListener('click',()=>openSetup(MODE));
+  $('#reviewTrain').addEventListener('click',()=>{ if(!G||!G.review) return; S().custom=G.review.slice().sort((a,b)=>a-b); S().poolMode='custom'; save(); openSetup('train'); });
+  $('#weakTrain').addEventListener('click',()=>{ if(!DB._weak||!DB._weak.length) return; S().custom=DB._weak.slice().sort((a,b)=>a-b); S().poolMode='custom'; save(); openSetup('train'); });
+  $('#resetData').addEventListener('click',()=>{ if(confirm('これまでの記録（成績・対戦成績）をすべて消します。よろしいですか？')){ DB.st={}; DB.h=[]; DB.cr={}; save(); renderStats(); toast('記録を消しました'); } });
+  // ホーム
+  $('#gradeSelect').addEventListener('change',e=>{ S().grade=e.target.value; save();
+    if(confirm(`${gradeOf(e.target.value).label}のおすすめ設定（CPUの時間・札の数など）にしますか？`)){ applyGradePreset(); toast('おすすめ設定にしました'); }
+    renderHome(); });
+  $('#openSettings').addEventListener('click',()=>{ $$('#settingsModal input[data-k]').forEach(i=>i.checked=!!S()[i.dataset.k]); $('#rateRange').value=S().rate; $('#rateLabel').textContent=S().rate; loadVoices(); $('#settingsModal').classList.add('show'); });
+  $('#rateRange').addEventListener('input',e=>{ S().rate=+e.target.value; $('#rateLabel').textContent=S().rate; save(); });
+  $('#voiceSelect').addEventListener('change',e=>{ S().voice=e.target.value; save(); });
+  $('#testVoice').addEventListener('click',()=>{ unlockSpeech(); speak(poemSpeech(P(1),true)); });
+  $('#applyPreset').addEventListener('click',()=>{ applyGradePreset(); toast(`${gradeOf(S().grade).label}のおすすめ設定にしました`); $('#rateRange').value=S().rate; $('#rateLabel').textContent=S().rate; });
+  // 図鑑
+  $('#zSearch').addEventListener('input',renderZukan);
+  $('#zFilter').addEventListener('change',renderZukan);
+  // キーボード
+  document.addEventListener('keydown',e=>{
+    if(!$('#game').classList.contains('active')||!G) return;
+    if(/^[0-9]$/.test(e.key)){ const i=e.key==='0'?9:(+e.key-1); pick(i); }
+    if((e.key==='Enter'||e.key===' ')&&$('#sheet').classList.contains('show')){ e.preventDefault(); $('#nextBtn').click(); }
+  });
+  window.addEventListener('resize',()=>{ if(G&&$('#game').classList.contains('active')) fitCards(); });
+  if('speechSynthesis' in window) speechSynthesis.onvoiceschanged=loadVoices;
+}
+function openPicker(){ renderPicker(); $('#pickerModal').classList.add('show'); }
+
+/* =========================================================
+   L. はじめに実行
+   ========================================================= */
+load(); applyRuby(); bind(); loadVoices(); renderHome();
+if(POEMS.length!==100) alert('データエラー：句の数が '+POEMS.length+' 首です');
+</script>
+</body>
+</html>

@@ -5,5 +5,6 @@
 - 一覧ページ: https://s04132509-glitch.github.io/School-apps/
 - アルファベット・ゲームセンター: https://s04132509-glitch.github.io/School-apps/alphabet-games.html
 - Unit 7 What do you want? マーケット: https://s04132509-glitch.github.io/School-apps/unit7-market.html
+- 百人一首かるた道場: https://s04132509-glitch.github.io/School-apps/hyakunin-isshu-karuta.html
 
 児童の個人情報は入れません。アプリのもとのファイルは非公開の jarvis リポジトリの `apps/` にあります。
