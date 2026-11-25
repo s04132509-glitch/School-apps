@@ -259,6 +259,18 @@ body:not(.noruby) .card .ctext{line-height:2.05}
 .countdown b{font-size:6rem;color:#fff;font-family:'Shippori Mincho',serif;text-shadow:0 4px 0 rgba(0,0,0,.3);animation:pop .9s ease infinite}
 .countdown p{color:#fff;font-weight:900;font-size:1.1rem;text-shadow:0 2px 0 rgba(0,0,0,.3);margin:0}
 @keyframes pop{0%{transform:scale(1.4);opacity:0}30%{transform:scale(1);opacity:1}}
+/* みんなと対戦 */
+.pinbox{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.pinbox span{width:clamp(52px,14vw,96px);height:clamp(70px,18vw,124px);display:grid;place-items:center;background:#fff;border:4px solid var(--ai);border-radius:16px;font-size:clamp(2.4rem,9vw,4.6rem);font-weight:900;color:var(--ai);box-shadow:0 5px 0 #0f2238}
+.pin-input{font-size:2.6rem!important;font-weight:900;letter-spacing:.4em;text-align:center;width:min(280px,80vw);padding:10px 0 10px .4em!important;border:4px solid var(--ai)!important;border-radius:16px!important}
+.net-status{text-align:center;font-weight:900;color:var(--ink-soft);margin:6px 0;min-height:1.4em}
+.tgrid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:12px 0;max-height:34vh;overflow:auto}
+.tgrid span{background:#eef8e8;border:2px solid var(--matcha);border-radius:999px;padding:4px 10px;font-weight:900;font-size:.85rem}
+.tgrid span.off{background:#f1ece2;border-color:var(--line);color:var(--ink-soft)}
+.podium{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.podium div{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-weight:900}
+.podium div.b{border-color:var(--matcha);background:#f3faef}
+.podium div span{margin-left:auto;color:var(--ai)}
 footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
 @media (max-width:600px){
   .wrap{padding:12px 12px 30px}
@@ -296,6 +308,7 @@ footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
       <div class="profiles" id="profileList"></div>
     </div>
   </div>
+  <div style="text-align:center;margin-top:18px"><button class="btn ghost" id="teacherBtn">👩‍🏫 先生用：クラス対戦をひらく</button></div>
 </section>
 
 <!-- ================= ホーム ================= -->
@@ -318,6 +331,7 @@ footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
     <button data-mode="kima"><span class="ic" style="background:#fff3cc">⚡</span><span><b>決まり字道場</b><small>最初の数文字で札を取る練習</small></span></button>
     <button data-go="stats"><span class="ic" style="background:#e3ebf5">📊</span><span><b>せいせき</b><small>にがてな句ランキング・記録</small></span></button>
     <button data-go="zukan"><span class="ic" style="background:#e6f3df">📖</span><span><b>百首ずかん</b><small>100首の意味・作者・決まり字</small></span></button>
+    <button class="main" id="onlineBtn" style="background:linear-gradient(135deg,#5b3a8c,#8a5cc7);border-color:#5b3a8c;box-shadow:0 5px 0 #3a2260,var(--shadow)"><span class="ic" style="background:rgba(255,255,255,.15)">🌐</span><span><b>みんなと対戦（PIN）</b><small>友だちと1対1・先生のクラス対戦に参加</small></span></button>
   </div>
   <div class="rivals" id="rivalsMini"></div>
   <footer>記録は この端末のブラウザに、学年・組・番号ごとに保存されます。<br><a href="./" style="color:inherit">← 学習アプリの一覧へ</a></footer>
@@ -456,6 +470,66 @@ footer{text-align:center;font-size:.75rem;color:var(--ink-soft);margin-top:24px}
     </div>
   </div>
   <div id="zList"></div>
+</section>
+
+<!-- ================= みんなと対戦（メニュー） ================= -->
+<section id="online" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" data-go="home">← もどる</button>
+    <h2>🌐 みんなと対戦</h2><span></span>
+  </div>
+  <div class="panel" style="text-align:center">
+    <p style="margin:0;font-weight:700">PIN（4けたの番号）を使って、ほかのChromebookとつながります。</p>
+    <p class="note" id="onConn">まだつないでいません</p>
+  </div>
+  <div class="menu">
+    <button id="duelCreateBtn"><span class="ic" style="background:#fde8e3">👫</span><span><b>1対1の部屋をつくる</b><small>PINを相手に教えて対戦</small></span></button>
+    <button id="duelJoinBtn"><span class="ic" style="background:#e3ebf5">🔑</span><span><b>1対1の部屋に入る</b><small>相手のPINを入れる</small></span></button>
+    <button class="main" id="classJoinBtn"><span class="ic" style="background:rgba(255,255,255,.15)">🏫</span><span><b>クラス対戦に参加</b><small>先生の画面のPINを入れる</small></span></button>
+  </div>
+</section>
+
+<!-- ================= 部屋（ロビー）・最終結果 ================= -->
+<section id="nlobby" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" id="nlLeave">← やめる</button>
+    <h2 id="nlTitle">部屋</h2><span></span>
+  </div>
+  <div id="nlBody"></div>
+</section>
+
+<!-- ================= オンライン対戦の画面（児童） ================= -->
+<section id="ngame" class="screen">
+  <div class="score-board">
+    <div class="side">
+      <div class="avatar" style="background:linear-gradient(135deg,#bfe3ff,#7fb8ea)">🧒</div>
+      <div class="who"><b id="nMeName">あなた</b><div class="pts" id="nMePts">0</div></div>
+    </div>
+    <div class="round-info"><big id="nRound">1</big><span id="nRoundOf">/ 10 首</span></div>
+    <div class="side r">
+      <div class="avatar" id="nOpAv" style="background:linear-gradient(135deg,#ffd9c2,#ff7043)">🧑</div>
+      <div class="who"><b id="nOpName">あいて</b><div class="pts" id="nOpPts">0</div></div>
+    </div>
+  </div>
+  <div class="reader">
+    <span class="lbl">読み札</span>
+    <div id="nRead"></div>
+  </div>
+  <div class="net-status" id="nStatus">&nbsp;</div>
+  <div class="field" id="nField"></div>
+  <div class="game-tools">
+    <button class="btn ghost small" id="nQuit">🏳️ やめる</button>
+    <span class="note">PIN <b id="nPin"></b></span>
+  </div>
+</section>
+
+<!-- ================= 先生用（クラス対戦） ================= -->
+<section id="teacher" class="screen">
+  <div class="topbar">
+    <button class="btn ghost small" id="tLeave">← おわる</button>
+    <h2>👩‍🏫 クラス対戦</h2><span></span>
+  </div>
+  <div id="tBody"></div>
 </section>
 </div>
 
@@ -984,7 +1058,8 @@ function updateScore(){
 function say(text,ms){ const b=$('#bubble'); b.textContent=text; b.classList.add('show'); clearTimeout(say._t); say._t=setTimeout(()=>b.classList.remove('show'),ms||1800); }
 
 /* 読み上げの「時間表」を作る */
-function buildReading(p,kimaOnly){
+function buildReading(p,kimaOnly,readShimo){
+  if(readShimo===undefined) readShimo=G.opts.readShimo;
   const parts=[]; let pos=0, k=0; const kmap=[]; const kimaLen=[...p.kima].length;
   const mk=(lines,isShimo)=>{
     const html=[];
@@ -1004,7 +1079,7 @@ function buildReading(p,kimaOnly){
     return html.join('');
   };
   let html=`<div class="read-text${kimaOnly?' big':''}">`+mk(p.kami,false);
-  if(G.opts.readShimo && !kimaOnly){ pos+=SPAUSE; html+=`<span class="sep"></span><span class="shimo-part">${mk(p.shimo,true)}</span>`; }
+  if(readShimo && !kimaOnly){ pos+=SPAUSE; html+=`<span class="sep"></span><span class="shimo-part">${mk(p.shimo,true)}</span>`; }
   html+='</div>';
   const endPos = kimaOnly ? kimaLen : pos;
   return {html,kmap,endPos};
@@ -1299,7 +1374,7 @@ function bind(){
     const go=e.target.closest('[data-go]'); if(go){ if(G&&$('#game').classList.contains('active')) return; show(go.dataset.go); return; }
     const md=e.target.closest('[data-mode]'); if(md){ openSetup(md.dataset.mode); return; }
     const cl=e.target.closest('[data-close]'); if(cl){ $('#'+cl.dataset.close).classList.remove('show'); if(cl.dataset.close==='pickerModal') renderSetup(); return; }
-    const cpu=e.target.closest('.cpu-card'); if(cpu && !e.target.matches('input')){ S().cpu=+cpu.dataset.cpu; save(); renderSetup(); return; }
+    const cpu=e.target.closest('.cpu-card[data-cpu]'); if(cpu && !e.target.matches('input')){ S().cpu=+cpu.dataset.cpu; save(); renderSetup(); return; }
     const z=e.target.closest('[data-z]'); if(z){ show('zukan'); $('#zSearch').value=z.dataset.z; renderZukan(); return; }
     const li=e.target.closest('[data-listen]'); if(li){ unlockSpeech(); speak(poemSpeech(P(+li.dataset.listen),true)); return; }
     const card=e.target.closest('#field .card'); if(card){ pick(+card.dataset.i); return; }
@@ -1356,6 +1431,605 @@ function openPicker(){ renderPicker(); $('#pickerModal').classList.add('show'); 
    ========================================================= */
 applyRuby(); bind(); loadVoices(); renderLogin();
 if(POEMS.length!==100) alert('データエラー：句の数が '+POEMS.length+' 首です');
+</script>
+<script>
+/* =========================================================
+   M. みんなと対戦（Firebase でつなぐ）
+   - 1対1：部屋をつくった人の端末が「審判」
+   - クラス対戦：先生の端末が「審判」＋読み上げ係
+   - 押すまでの時間は各端末で測るので、通信の速さで不公平になりません
+   ========================================================= */
+const FB_CFG={
+  apiKey:"AIzaSyAxlF7coIAC5rFgpKfKIyaDXG31WLWRx5I",
+  authDomain:"karuta-dojo.firebaseapp.com",
+  databaseURL:"https://karuta-dojo-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"karuta-dojo",
+  storageBucket:"karuta-dojo.firebasestorage.app",
+  messagingSenderId:"746752613825",
+  appId:"1:746752613825:web:38459c0865acf2b35ce340"
+};
+const FB_VER='10.12.2';
+let FB=null, N=null, H=null;
+const START_DELAY=3000;   // 読み上げ開始までの待ち（ミリ秒）
+
+function loadScript(src){ return new Promise((ok,ng)=>{ const s=document.createElement('script'); s.src=src; s.onload=ok; s.onerror=()=>ng(new Error('load')); document.head.appendChild(s); }); }
+async function fbInit(){
+  if(FB) return FB;
+  $('#onConn') && ($('#onConn').textContent='つないでいます…');
+  if(!window.firebase){ for(const m of ['app','auth','database']) await loadScript(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-${m}-compat.js`); }
+  if(!firebase.apps.length) firebase.initializeApp(FB_CFG);
+  const auth=firebase.auth();
+  let user=await new Promise(r=>{ const un=auth.onAuthStateChanged(u=>{ un(); r(u); }); });
+  if(!user) user=(await auth.signInAnonymously()).user;
+  const db=firebase.database();
+  FB={db,uid:user.uid,offset:0};
+  db.ref('.info/serverTimeOffset').on('value',s=>{ FB.offset=s.val()||0; });
+  db.ref('.info/connected').on('value',s=>{ const c=$('#onConn'); if(c) c.textContent=s.val()?'✅ つながりました':'⚠️ つながっていません（ネットワークを確認してね）'; });
+  return FB;
+}
+const serverNow=()=>Date.now()+(FB?FB.offset:0);
+const TS=()=>firebase.database.ServerValue.TIMESTAMP;
+function netErr(e){ console.error(e); toast('つながりませんでした。ネットワークを確認して、もう一度ためしてね'); }
+
+/* ---------- 共通：部屋の出入り ---------- */
+function nTimer(fn,ms){ const t=setTimeout(fn,ms); N.timers.push(t); return t; }
+function nInterval(fn,ms){ const t=setInterval(fn,ms); N.timers.push(t); return t; }
+function nListen(ref,ev,fn){ ref.on(ev,fn); N.offs.push(()=>ref.off(ev,fn)); }
+function nCleanup(){
+  if(N){ N.offs.forEach(f=>{try{f();}catch(e){}}); N.timers.forEach(t=>{clearTimeout(t);clearInterval(t);}); }
+  if(H&&H.timers){ H.timers.forEach(t=>{clearTimeout(t);clearInterval(t);}); }
+  stopSpeak(); hideSheet(); N=null; H=null;
+}
+function newN(o){ nCleanup(); N=Object.assign({offs:[],timers:[],curN:0,phase:'idle',players:{},meta:null,round:null,lock:false,myT:null,myOk:false,wins:0},o); return N; }
+async function createRoom(type,settings){
+  await fbInit();
+  for(let i=0;i<25;i++){
+    const pin=String(1000+Math.floor(Math.random()*9000));
+    const ref=FB.db.ref('rooms/'+pin); const now=serverNow();
+    const r=await ref.transaction(cur=>{
+      if(cur===null || !cur.meta || cur.meta.state==='closed' || (now-(cur.meta.created||0))>6*3600e3)
+        return {meta:{type,state:'lobby',created:now,host:FB.uid,settings}};
+      return;
+    });
+    if(r.committed) return pin;
+  }
+  throw new Error('no pin');
+}
+async function enterRoom(pin,type,label){
+  await fbInit();
+  const ref=FB.db.ref('rooms/'+pin);
+  const m=(await ref.child('meta').once('value')).val();
+  if(!m||m.type!==type||m.state==='closed'||m.state==='end') return {err:'その番号の部屋は見つかりません'};
+  if(type==='duel'){
+    const ps=(await ref.child('players').once('value')).val()||{};
+    const others=Object.keys(ps).filter(k=>k!==FB.uid);
+    if(!ps[FB.uid] && (others.length>=2 || m.state!=='lobby')) return {err:'その部屋はもういっぱいです'};
+  }
+  await ref.child('players/'+FB.uid).update({l:label,on:true,j:TS()});
+  ref.child('players/'+FB.uid+'/on').onDisconnect().set(false);
+  return {ref,meta:m};
+}
+function leaveRoom(){
+  if(!N) return;
+  const ref=N.ref, isHost=N.role==='host'||N.role==='teacher';
+  try{
+    if(isHost && ref){ ref.child('meta/state').set('closed'); setTimeout(()=>ref.remove(),4000); }
+    else if(ref && FB){ ref.child('players/'+FB.uid).remove(); }
+  }catch(e){}
+  const back=N.role==='teacher'?'login':'online';
+  nCleanup(); if(back==='login') renderLogin(); show(back);
+}
+
+/* ---------- 共通：札・読み札の表示 ---------- */
+function fieldHTML(ids){
+  return ids.map((id,i)=>{ const p=P(id); return `<div class="card" data-ni="${i}"><span class="num">${i<9?i+1:(i===9?0:'')}</span><div class="ctext">${p.shimo.map(l=>`<div class="cl">${lineHTML(l)}</div>`).join('')}</div></div>`; }).join('');
+}
+function fitField(el,ids,maxVh){
+  const cards=[...el.querySelectorAll('.card')]; if(!cards.length) return;
+  const n=ids.length, narrow=window.innerWidth<600;
+  const c = n<=3?3 : n<=5?(narrow?3:5) : (narrow?4:5);
+  const gap=10, W=el.clientWidth-8;
+  const maxH=window.innerHeight*(maxVh||0.6)/Math.ceil(n/c);
+  let w=Math.max(60,Math.floor(Math.min(160,(W-gap*(c-1))/c,(maxH-10)*52/73))); const h=w*73/52;
+  cards.forEach(x=>x.style.width=w+'px');
+  let maxG=0; ids.forEach(id=>P(id).shimo.forEach(l=>{ maxG=Math.max(maxG,l.reduce((a,t)=>a+[...t.b].length,0)); }));
+  const fs=Math.max(9,Math.min((h-18)/(maxG+1.6),(w-16)/(S().ruby?4.4:3.6),30));
+  el.style.setProperty('--cfs',fs.toFixed(1)+'px');
+}
+function decisiveFor(p,ids){
+  let d=1;
+  ids.forEach(id=>{ if(id===p.id) return; const o=P(id).kamiR; let i=0; while(i<o.length&&i<p.kamiR.length&&o[i]===p.kamiR[i]) i++; d=Math.max(d,i+1); });
+  return Math.min(d,p.kamiR.length);
+}
+function readingEndMs(p,readShimo){ const R=buildReading(p,false,readShimo); return LEAD+R.endPos*msPerChar(); }
+/* 読み札を少しずつ表示（areaSel の中） */
+function startReveal(areaSel,p,st,perfStart,doSpeak){
+  const R=buildReading(p,false,!!st.readShimo); N.R=R;
+  const area=$(areaSel);
+  area.innerHTML = st.showText ? R.html : '<div class="listen"><span class="wave">🔊</span> よく聞いて…！</div>';
+  if(doSpeak) speak(poemSpeech(p,!!st.readShimo));
+  const ms=msPerChar(); const tks=[...area.querySelectorAll('.tk')];
+  const iv=nInterval(()=>{
+    const pos=(performance.now()-perfStart-LEAD)/ms;
+    tks.forEach(el=>{ if(el.classList.contains('wait')&&+el.dataset.s<=pos){ el.classList.remove('wait'); if(st.hint&&el.classList.contains('k')) el.classList.add('kima'); } });
+  },40);
+  return iv;
+}
+function revealAll(areaSel){
+  const area=$(areaSel);
+  if(N&&N.R&&!area.querySelector('.tk')) area.innerHTML=N.R.html;
+  area.querySelectorAll('.tk').forEach(el=>{ el.classList.remove('wait'); if(el.classList.contains('k')) el.classList.add('kima'); });
+}
+function sheetPoem(p){
+  return `<div class="rp-meta">第${p.id}番　${esc(p.author)}（${esc(p.authorYomi)}）</div>
+    <div class="poem-full">${poemHTML(p)}</div>
+    <div style="text-align:center"><span class="chip kima">決まり字「${p.kima}」</span></div>
+    <div class="meaning">💡 <b>意味</b>：${esc(p.meaning)}</div>`;
+}
+function settingsForm(prefix,opts){
+  const s=S();
+  return `
+  <h3>🎴 ならべる札の数</h3>
+  <div class="seg" id="${prefix}Cards">${[3,5,10].map(v=>`<button data-v="${v}" class="${s.cards===v?'on':''}">${v}枚</button>`).join('')}</div>
+  <h3 style="margin-top:14px">🔢 読む句の数</h3>
+  <div class="seg" id="${prefix}Q">${[5,10,20,50].map(v=>`<button data-v="${v}" class="${(s.q===v||(v===10&&![5,10,20,50].includes(s.q)))?'on':''}">${v}首</button>`).join('')}</div>
+  <h3 style="margin-top:14px">📏 ルール</h3>
+  <label class="switch">おてつき<small>まちがった札をさわると ${opts.class?'その回は負け':'−1点'}</small><input type="checkbox" id="${prefix}Ote" ${s.otetsuki?'checked':''}></label>
+  <label class="switch">下の句まで読む<input type="checkbox" id="${prefix}Shimo" ${s.readShimo?'checked':''}></label>
+  <label class="switch">読み札を画面に出す<small>${opts.class?'児童のChromebookにも表示します':'オフにすると耳だけで勝負'}</small><input type="checkbox" id="${prefix}Text" ${s.showText?'checked':''}></label>
+  <label class="switch">決まり字ヒント<input type="checkbox" id="${prefix}Hint" ${s.hint?'checked':''}></label>`;
+}
+function bindSeg(sel){ $(sel).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; $$(sel+' button').forEach(x=>x.classList.toggle('on',x===b)); }); }
+function readSettings(prefix){
+  return {cards:+($(`#${prefix}Cards .on`)||{dataset:{v:3}}).dataset.v, q:+($(`#${prefix}Q .on`)||{dataset:{v:10}}).dataset.v,
+    otetsuki:$(`#${prefix}Ote`).checked, readShimo:$(`#${prefix}Shimo`).checked, showText:$(`#${prefix}Text`).checked, hint:$(`#${prefix}Hint`).checked};
+}
+function pinBig(pin){ return `<div class="pinbox">${pin.split('').map(d=>`<span>${d}</span>`).join('')}</div>`; }
+
+/* =========================================================
+   M-1. 1対1対戦（児童）
+   ========================================================= */
+function duelCreateView(){
+  newN({role:'host',type:'duel'});
+  $('#nlTitle').textContent='👫 1対1の部屋をつくる';
+  $('#nlBody').innerHTML=`<div class="panel">${settingsForm('dc',{})}
+    <label class="switch">この端末で読み上げる<small>となりどうしで遊ぶときは、どちらか1台だけオンにすると聞きやすいよ</small><input type="checkbox" id="dcSpeak" checked></label></div>
+    <div style="text-align:center"><button class="btn shu big" id="dcGo">部屋をつくる</button></div>`;
+  bindSeg('#dcCards'); bindSeg('#dcQ');
+  $('#dcGo').onclick=async()=>{
+    unlockSpeech(); const st=readSettings('dc'); N.speak=$('#dcSpeak').checked;
+    $('#dcGo').disabled=true;
+    try{
+      const pin=await createRoom('duel',st);
+      const r=await enterRoom(pin,'duel',pidLabel(PID));
+      N.pin=pin; N.ref=r.ref; N.meta=r.meta; duelAttach(); duelLobbyView();
+    }catch(e){ netErr(e); $('#dcGo').disabled=false; }
+  };
+  show('nlobby');
+}
+function pinEntryView(type){
+  newN({role:type==='duel'?'guest':'student',type});
+  $('#nlTitle').textContent= type==='duel'?'🔑 1対1の部屋に入る':'🏫 クラス対戦に参加';
+  $('#nlBody').innerHTML=`<div class="panel" style="text-align:center">
+    <p style="font-weight:900;margin-top:0">${type==='duel'?'相手の画面に出ている':'先生の画面に出ている'} 4けたの番号（PIN）を入れてね</p>
+    <input id="pinIn" class="pin-input" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="0000">
+    ${type==='duel'?`<label class="switch" style="text-align:left">この端末で読み上げる<small>となりどうしなら、どちらか1台だけオンが聞きやすいよ</small><input type="checkbox" id="pjSpeak" checked></label>`:''}
+    <div style="margin-top:14px"><button class="btn shu big" id="pinGo">入る</button></div>
+    <p class="note">${esc(pidLabel(PID))} として入ります</p></div>`;
+  const inp=$('#pinIn'); setTimeout(()=>inp.focus(),100);
+  inp.addEventListener('input',()=>{ inp.value=inp.value.replace(/\D/g,'').slice(0,4); });
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') $('#pinGo').click(); });
+  $('#pinGo').onclick=async()=>{
+    const pin=inp.value; if(!/^\d{4}$/.test(pin)){ toast('4けたの番号を入れてね'); return; }
+    unlockSpeech(); $('#pinGo').disabled=true;
+    try{
+      const r=await enterRoom(pin,type,pidLabel(PID));
+      if(r.err){ toast(r.err); $('#pinGo').disabled=false; return; }
+      N.pin=pin; N.ref=r.ref; N.meta=r.meta;
+      if(type==='duel'){ N.speak=$('#pjSpeak').checked; duelAttach(); duelLobbyView(); }
+      else { classStudentAttach(); studentLobbyView(); }
+    }catch(e){ netErr(e); $('#pinGo').disabled=false; }
+  };
+  show('nlobby');
+}
+function duelLobbyView(){
+  const ps=N.players, ids=Object.keys(ps);
+  const host=N.role==='host';
+  $('#nlTitle').textContent='👫 1対1の部屋';
+  $('#nlBody').innerHTML=`<div class="panel" style="text-align:center">
+    <p style="font-weight:900;margin:0">部屋の番号（PIN）</p>${pinBig(N.pin)}
+    <p class="note">${host?'この番号を相手に教えてね。相手が入ったら「対戦スタート」！':'部屋をつくった人がスタートするのを待っています…'}</p>
+    <div class="profiles" style="margin:12px 0">${ids.map(u=>`<span class="pf ${ps[u].on?'last':''}"><button>${u===FB.uid?'🧒 ':''}${esc(ps[u].l)}${ps[u].on?'':'（はなれています）'}</button></span>`).join('')||'<span class="note">だれもいません</span>'}</div>
+    ${host?`<button class="btn shu big" id="duelStart" ${ids.filter(u=>ps[u].on).length===2?'':'disabled'}>対戦スタート！</button>`:''}
+  </div>`;
+  if(host) $('#duelStart').onclick=()=>{ unlockSpeech(); hostDuelStart(); };
+}
+function duelAttach(){
+  const ref=N.ref;
+  nListen(ref.child('players'),'value',s=>{ N.players=s.val()||{}; if(N.phase==='idle'&&$('#nlobby').classList.contains('active')) duelLobbyView(); duelScores(); if(H&&H.type==='duel') hostDuelCheckReady(); });
+  nListen(ref.child('meta'),'value',s=>{ const m=s.val(); if(!m){ return; } N.meta=m;
+    if(m.state==='closed' && N.role!=='host' && N.phase!=='final'){ toast('部屋がとじられました'); nCleanup(); show('online'); return; }
+    if(m.state==='end') duelFinal(m.final||{}); });
+  nListen(ref.child('round'),'value',s=>{ const r=s.val(); if(r) onRound(r); });
+  nListen(ref.child('res'),'value',s=>{ const r=s.val(); if(r) onDuelRes(r); });
+}
+function oppId(){ return Object.keys(N.players).find(u=>u!==FB.uid); }
+function duelScores(){
+  if(N.type!=='duel') return;
+  const me=N.players[FB.uid]||{}, o=N.players[oppId()]||{};
+  $('#nMeName').textContent=pidLabel(PID); $('#nMePts').textContent=me.s||0;
+  $('#nOpName').textContent=o.l||'あいて'; $('#nOpPts').textContent=o.s||0;
+}
+
+/* ラウンド開始（児童の端末：1対1・クラス共通） */
+function onRound(r){
+  if(!N||r.n===N.curN) return;
+  N.curN=r.n; N.round=r; N.lock=false; N.myT=null; N.myOk=false; N.phase='wait';
+  hideSheet(); stopSpeak();
+  const st=(N.meta&&N.meta.settings)||{};
+  show('ngame');
+  $('#nPin').textContent=N.pin;
+  $('#nRound').textContent=r.n; $('#nRoundOf').textContent=`/ ${r.q} 首`;
+  if(N.type==='class'){ $('#nMeName').textContent=pidLabel(PID); $('#nMePts').textContent=N.wins; $('#nOpAv').textContent=(CPUS.find(c=>c.id===r.cpu)||CPUS[0]).emoji; $('#nOpAv').style.background=(CPUS.find(c=>c.id===r.cpu)||CPUS[0]).bg; $('#nOpName').textContent='クラス vs '+(CPUS.find(c=>c.id===r.cpu)||CPUS[0]).name; $('#nOpPts').textContent=`${r.cls||0}−${r.cpuS||0}`; }
+  else duelScores();
+  const f=$('#nField'); f.innerHTML=fieldHTML(r.field); fitField(f,r.field);
+  $('#nRead').innerHTML='<div class="listen">札の場所をおぼえよう…</div>';
+  const delay=r.startAt-serverNow();
+  N.perfStart=performance.now()+delay;
+  const p=P(r.target);
+  const cd=nInterval(()=>{ const left=Math.ceil((N.perfStart-performance.now())/1000); if(N.phase==='wait') $('#nStatus').textContent= left>0?`⏳ ${left} 秒後に読みはじめます`:'📣 読んでいます'; },200);
+  nTimer(()=>{ if(!N||N.curN!==r.n) return; clearInterval(cd); N.phase='reading';
+    $('#nStatus').textContent= N.type==='class'?'📣 先生の読み上げをよく聞いて！':'📣 よく聞いて！';
+    startReveal('#nRead',p,st,N.perfStart, N.type==='duel' && N.speak);
+  },Math.max(0,delay));
+}
+function nCardEl(i){ return document.querySelector(`#nField .card[data-ni="${i}"]`); }
+function nPick(i){
+  if(!N||N.phase!=='reading'||N.lock) return;
+  const r=N.round, id=r.field[i]; if(id==null) return;
+  const t=Math.max(50,Math.round(performance.now()-N.perfStart-LEAD));
+  const ok=id===r.target; const st=(N.meta&&N.meta.settings)||{};
+  const el=nCardEl(i);
+  const tapRef=N.ref.child(`taps/${r.n}/${FB.uid}`);
+  if(N.type==='class'){
+    N.lock=true; N.myT=t; N.myOk=ok; N.phase='sent';
+    tapRef.set({t,c:id,w:ok?0:1});
+    if(ok){ SFX.take(); el&&el.classList.add('answer'); $('#nStatus').textContent=`✋ ${(t/1000).toFixed(2)}秒！ けっかを待ってね`; }
+    else { SFX.bad(); rec(r.target,false,null,true); el&&el.classList.add('wrong','wrong-mark'); $('#nStatus').textContent='😣 おてつき… けっかを待ってね'; }
+    return;
+  }
+  // 1対1
+  if(ok){ N.lock=true; N.myT=t; N.phase='sent'; tapRef.set({t,c:id}); SFX.take(); el&&el.classList.add('answer'); $('#nStatus').textContent=`✋ ${(t/1000).toFixed(2)}秒！ 判定中…`; return; }
+  SFX.bad(); rec(r.target,false,null,true);
+  if(el){ el.classList.remove('wrong'); void el.offsetWidth; el.classList.add('wrong','wrong-mark'); }
+  if(st.otetsuki){ N.lock=true; tapRef.set({t,c:id,w:1}); flash('おてつき！ −1','#ffd0c8'); $('#nStatus').textContent='😣 おてつき… この回はもう取れません'; }
+  else { N.lock=true; flash('ちがうよ！','#ffd0c8'); nTimer(()=>{ if(N&&N.phase==='reading') N.lock=false; },1000); }
+}
+function onDuelRes(res){
+  if(!N||res.n!==N.curN||N.phase==='done') return;
+  N.phase='done'; stopSpeak(); revealAll('#nRead');
+  const r=N.round, p=P(r.target), i=r.field.indexOf(r.target), el=nCardEl(i);
+  let msg,cls;
+  if(res.w===FB.uid){ msg=`🎉 とった！ ${(res.t/1000).toFixed(2)}秒`; cls='good'; SFX.good(); el&&el.classList.add('me'); rec(r.target,true,res.t); }
+  else if(res.w){ const o=N.players[res.w]||{}; msg=`😣 ${esc(o.l||'あいて')}が取った（${(res.t/1000).toFixed(2)}秒）`; cls='bad'; el&&el.classList.add('cpu'); rec(r.target,false); }
+  else { msg='だれも取れませんでした'; cls='neutral'; el&&el.classList.add('answer'); rec(r.target,false); }
+  save(); duelScores();
+  $$('#nField .card').forEach((c,j)=>{ if(j!==i) c.classList.add('fade'); });
+  $('#nStatus').textContent=' ';
+  const last=res.n>=r.q;
+  $('#sheetIn').innerHTML=`<div class="rp-msg ${cls}">${msg}</div>${sheetPoem(p)}
+    <div class="actions"><button class="btn ghost small" id="nsQuit">🏳️ やめる</button><button class="btn shu" id="nsReady">${last?'けっかを見る 🏁':'つぎへ ▶'}</button></div>`;
+  $('#sheet').classList.add('show');
+  $('#nsQuit').onclick=()=>{ if(confirm('対戦をやめますか？')) leaveRoom(); };
+  $('#nsReady').onclick=()=>{ N.ref.child(`players/${FB.uid}/ready`).set(res.n); $('#nsReady').disabled=true; $('#nsReady').textContent='相手を待っています…'; };
+}
+function duelFinal(fin){
+  if(!N||N.phase==='final') return; N.phase='final'; hideSheet(); stopSpeak();
+  const sc=fin.s||{}; const me=sc[FB.uid]||0; const ou=oppId(); const op=ou?(sc[ou]||0):0;
+  const res= me>op?'win':me<op?'lose':'draw';
+  res==='win'?SFX.win():res==='lose'?SFX.lose():SFX.win();
+  DB.h.unshift({d:Date.now(),mode:'duel',q:fin.q||0,ok:me,avg:null,me,op,res,opl:(N.players[ou]||{}).l||''}); DB.h=DB.h.slice(0,30); save();
+  $('#nlTitle').textContent='👫 1対1 けっか';
+  $('#nlBody').innerHTML=`<div class="panel result-hero"><p class="big ${res}">${res==='win'?'勝ち！':res==='lose'?'負け…':'引き分け'}</p>
+    <div class="vs-score"><span style="color:var(--ai)">${me}</span> − <span style="color:var(--shu)">${op}</span></div>
+    <p style="font-weight:900">${esc(pidLabel(PID))} vs ${esc((N.players[ou]||{}).l||'あいて')}</p>
+    <p class="note">取れなかった句は「にがて特訓」でふくしゅうできるよ！</p></div>
+    <div style="text-align:center"><button class="btn big" id="dfBack">もどる</button></div>`;
+  $('#dfBack').onclick=()=>leaveRoom();
+  if(N.role==='host') N.ref.onDisconnect().remove();
+  show('nlobby');
+}
+
+/* ---------- 1対1：審判（部屋をつくった人の端末） ---------- */
+function hostDuelStart(){
+  const st=N.meta.settings; const Q=Math.min(st.q,100);
+  H={type:'duel',timers:[],Q,queue:shuffle(POEMS.map(p=>p.id)).slice(0,Q),field:[],read:{},n:0,readCount:0,takenIdx:null,scores:{},resolved:{},oteDone:{},pending:null,advanced:{}};
+  Object.keys(N.players).forEach(u=>H.scores[u]=0);
+  hostFillField(st.cards);
+  N.ref.child('meta/state').set('playing');
+  hostDuelNext();
+}
+function hostPickDummy(){
+  const used=new Set([...H.field,...H.queue]);
+  const c=POEMS.filter(p=>!used.has(p.id)); return c.length? c[Math.floor(Math.random()*c.length)].id : null;
+}
+function hostFillField(n){
+  while(H.field.length<n && H.queue.length){ const id=H.queue.shift(); H.field.push(id); H.read[id]=false; }
+  while(H.field.length<n){ const d=hostPickDummy(); if(d==null) break; H.field.push(d); }
+  shuffle(H.field);
+}
+function hostReplaceTaken(){
+  if(H.takenIdx==null) return; const i=H.takenIdx; H.takenIdx=null;
+  if(H.queue.length){ const id=H.queue.shift(); H.field[i]=id; H.read[id]=false; return; }
+  const liveLeft=H.field.some((id,j)=>j!==i && H.read[id]===false);
+  if(liveLeft){ H.field[i]=-1; const d=hostPickDummy(); if(d!=null){ H.field[i]=d; return; } }
+  H.field.splice(i,1);
+}
+function hostNextTarget(){
+  hostReplaceTaken();
+  if(H.readCount>=H.Q) return null;
+  const live=H.field.filter(id=>H.read[id]===false);
+  return live.length? live[Math.floor(Math.random()*live.length)] : null;
+}
+function hostDuelNext(){
+  const target=hostNextTarget();
+  if(target==null){ hostDuelEnd(); return; }
+  H.n++; H.pending=null;
+  const st=N.meta.settings, p=P(target);
+  const startAt=serverNow()+START_DELAY;
+  N.ref.child('round').set({n:H.n,q:H.Q,target,field:H.field.slice(),startAt});
+  // だれも取らなかったとき
+  const endMs=readingEndMs(p,st.readShimo)+5000;
+  const n=H.n;
+  H.timers.push(setTimeout(()=>hostDuelResolve(n,null,0),START_DELAY+endMs));
+  const tref=N.ref.child('taps/'+n);
+  const fn=s=>hostDuelTaps(n,s.val()||{});
+  tref.on('value',fn); N.offs.push(()=>tref.off('value',fn));
+}
+function hostDuelTaps(n,taps){
+  if(H.resolved[n]) return;
+  const st=N.meta.settings;
+  Object.entries(taps).forEach(([u,v])=>{
+    if(v.w && st.otetsuki && !H.oteDone[n+'_'+u]){ H.oteDone[n+'_'+u]=1; H.scores[u]=Math.max(0,(H.scores[u]||0)-1); N.ref.child(`players/${u}/s`).set(H.scores[u]); }
+  });
+  const ok=Object.entries(taps).filter(([u,v])=>!v.w);
+  if(ok.length && !H.pending){
+    // 最初の正解がとどいてから少し待ち、いちばん速い人に決める（通信の遅れ対策）
+    H.pending=setTimeout(()=>{ N.ref.child('taps/'+n).once('value').then(s=>{ const all=Object.entries(s.val()||{}).filter(([u,v])=>!v.w).sort((a,b)=>a[1].t-b[1].t); if(all.length) hostDuelResolve(n,all[0][0],all[0][1].t); }); },600);
+    H.timers.push(H.pending);
+  }
+}
+function hostDuelResolve(n,winner,t){
+  if(H.resolved[n]||n!==H.n) return; H.resolved[n]=1;
+  const target=N.round&&N.round.n===n?N.round.target:null;
+  if(winner){ H.scores[winner]=(H.scores[winner]||0)+1; N.ref.child(`players/${winner}/s`).set(H.scores[winner]); }
+  const tg=target!=null?target:H.field.find(id=>H.read[id]===false);
+  H.read[tg]=true; H.readCount++; H.takenIdx=H.field.indexOf(tg);
+  N.ref.child('res').set({n,w:winner||null,t:t||0});
+}
+function hostDuelCheckReady(){
+  if(!H||H.type!=='duel'||!H.resolved[H.n]||H.advanced[H.n]) return;
+  const on=Object.entries(N.players).filter(([u,v])=>v.on);
+  if(on.length && on.every(([u,v])=>v.ready===H.n)){ H.advanced[H.n]=1; setTimeout(hostDuelNext,300); }
+}
+function hostDuelEnd(){ N.ref.child('meta').update({state:'end',final:{s:H.scores,q:H.Q}}); }
+
+/* =========================================================
+   M-2. クラス対戦（児童側）
+   ========================================================= */
+function studentLobbyView(){
+  $('#nlTitle').textContent='🏫 クラス対戦';
+  $('#nlBody').innerHTML=`<div class="panel" style="text-align:center">
+    <div style="font-size:3rem">🎌</div>
+    <p style="font-weight:900;font-size:1.2rem">${esc(pidLabel(PID))} で参加しました！</p>
+    <p class="note">先生が「スタート」を押すまで待ってね。<br>読み上げは先生の画面から流れます。</p>
+    <p class="note">PIN ${N.pin}</p></div>`;
+}
+function classStudentAttach(){
+  const ref=N.ref;
+  nListen(ref.child('meta'),'value',s=>{ const m=s.val(); if(!m) return; N.meta=m;
+    if(m.state==='closed' && N.phase!=='final'){ toast('先生が部屋をとじました'); nCleanup(); show('online'); return; }
+    if(m.state==='end') classStudentFinal(m.final||{}); });
+  nListen(ref.child('round'),'value',s=>{ const r=s.val(); if(r) onRound(r); });
+  nListen(ref.child('res'),'value',s=>{ const r=s.val(); if(r) onClassRes(r); });
+}
+function onClassRes(res){
+  if(!N||res.n!==N.curN||N.phase==='done') return;
+  N.phase='done'; revealAll('#nRead');
+  const r=N.round, p=P(r.target), i=r.field.indexOf(r.target), el=nCardEl(i);
+  const win=N.myOk && N.myT!=null && N.myT<res.cpuT;
+  if(win){ N.wins++; SFX.good(); el&&el.classList.add('me'); }
+  else { el&&el.classList.add(N.myOk?'cpu':'answer'); }
+  rec(r.target,win,win?N.myT:null);
+  save();
+  $('#nMePts').textContent=N.wins; $('#nOpPts').textContent=`${res.cls}−${res.cpuS}`;
+  $$('#nField .card').forEach((c,j)=>{ if(j!==i) c.classList.add('fade'); });
+  const cpu=CPUS.find(c=>c.id===r.cpu)||CPUS[0];
+  const mine = win?`🎉 ${cpu.name}に勝った！ ${(N.myT/1000).toFixed(2)}秒`
+    : N.myOk?`😣 ${cpu.name}のほうが速かった（あなた ${(N.myT/1000).toFixed(2)}秒 / ${cpu.name} ${(res.cpuT/1000).toFixed(2)}秒）`
+    : N.myT!=null?'😣 おてつき…':'⏰ 取れなかった…';
+  $('#sheetIn').innerHTML=`<div class="rp-msg ${win?'good':'bad'}">${mine}</div>
+    <div class="rp-meta" style="font-size:1rem;margin:4px 0">クラスで <b>${res.beat}</b> / ${res.total} 人が ${cpu.name}より速かった → <b style="color:${res.classWin?'var(--matcha)':'var(--shu)'}">${res.classWin?'クラスの勝ち！':cpu.name+'の勝ち'}</b></div>
+    ${sheetPoem(p)}
+    <p class="note" style="text-align:center">先生が「つぎへ」を押すまで待ってね</p>`;
+  $('#sheet').classList.add('show');
+  $('#nStatus').textContent=' ';
+}
+function classStudentFinal(fin){
+  if(!N||N.phase==='final') return; N.phase='final'; hideSheet();
+  const cpu=CPUS.find(c=>c.id===fin.cpu)||CPUS[0];
+  const res= fin.cls>fin.cpuS?'win':fin.cls<fin.cpuS?'lose':'draw';
+  DB.h.unshift({d:Date.now(),mode:'class',q:fin.q||0,ok:N.wins,avg:null,me:fin.cls,op:fin.cpuS,res,cpu:fin.cpu}); DB.h=DB.h.slice(0,30); save();
+  $('#nlTitle').textContent='🏫 クラス対戦 けっか';
+  $('#nlBody').innerHTML=`<div class="panel result-hero"><p class="big ${res}">${res==='win'?'クラスの勝ち！':res==='lose'?cpu.name+'の勝ち':'引き分け'}</p>
+    <div class="vs-score"><span style="color:var(--ai)">クラス ${fin.cls}</span> − <span style="color:var(--shu)">${fin.cpuS} ${cpu.name}</span></div>
+    <p style="font-weight:900">あなたは ${fin.q} 首中 <b style="color:var(--matcha)">${N.wins}</b> 首で ${cpu.name}に勝ったよ！</p></div>
+    <div style="text-align:center"><button class="btn big" id="cfBack">もどる</button></div>`;
+  $('#cfBack').onclick=()=>leaveRoom();
+  show('nlobby');
+}
+
+/* =========================================================
+   M-3. クラス対戦（先生の端末）
+   ========================================================= */
+function teacherSetupView(){
+  newN({role:'teacher',type:'class'});
+  const s=S();
+  $('#tBody').innerHTML=`
+   <div class="panel"><h3>🎌 クラスの対戦あいて（CPU）</h3>
+    <div class="cpu-list" id="tCpuList">${CPUS.map(c=>`<div class="cpu-card ${s.cpu===c.id?'on':''}" data-tcpu="${c.id}"><span class="lv">Lv.${c.id}</span>
+      <div class="avatar" style="background:${c.bg}">${c.emoji}</div><div class="nm">${c.name}</div><div class="tt">${c.title}</div>
+      <div class="stars">${'★'.repeat(c.id)}${'☆'.repeat(5-c.id)}</div>
+      <div class="tm">取るまで <span>${(+s.cpuTimes[c.id]).toFixed(1)}秒</span></div>
+      <input type="range" min="0.6" max="12" step="0.1" value="${s.cpuTimes[c.id]}" data-tcputime="${c.id}"></div>`).join('')}</div>
+    <p class="note">児童一人ひとりが、このCPUより速く取れたら「勝ち」。半分より多くの児童が勝った回は「クラスの勝ち」です。</p></div>
+   <div class="panel">${settingsForm('tc',{class:true})}</div>
+   <div style="text-align:center"><button class="btn shu big" id="tcGo">部屋をひらく（PINを出す）</button></div>`;
+  bindSeg('#tcCards'); bindSeg('#tcQ');
+  $('#tCpuList').addEventListener('click',e=>{ if(e.target.matches('input')) return; const c=e.target.closest('[data-tcpu]'); if(!c) return; S().cpu=+c.dataset.tcpu; $$('#tCpuList .cpu-card').forEach(x=>x.classList.toggle('on',x===c)); });
+  $('#tCpuList').addEventListener('input',e=>{ const id=e.target.dataset.tcputime; if(!id) return; S().cpuTimes[id]=+e.target.value; e.target.parentElement.querySelector('.tm span').textContent=(+e.target.value).toFixed(1)+'秒'; });
+  $('#tcGo').onclick=async()=>{
+    unlockSpeech(); const st=readSettings('tc'); st.cpu=S().cpu; st.cpuTime=S().cpuTimes[S().cpu];
+    $('#tcGo').disabled=true;
+    try{ const pin=await createRoom('class',st); N.pin=pin; N.ref=FB.db.ref('rooms/'+pin); N.meta={type:'class',state:'lobby',settings:st}; teacherAttach(); teacherLobbyView(); }
+    catch(e){ netErr(e); $('#tcGo').disabled=false; }
+  };
+  show('teacher');
+}
+function teacherAttach(){
+  nListen(N.ref.child('players'),'value',s=>{ N.players=s.val()||{}; if(N.phase==='idle') teacherLobbyView(); else teacherCount(); });
+}
+function sortedPlayers(){ return Object.entries(N.players).sort((a,b)=>pidSort(pidKeyOf(a[1].l),pidKeyOf(b[1].l))); }
+function pidKeyOf(l){ const m=/(\d)年(.)組 (\d+)番/.exec(l||''); return m?`${m[1]}-${m[2]}-${m[3]}`:'9-Z-99'; }
+function teacherLobbyView(){
+  const ps=sortedPlayers(); const on=ps.filter(([u,v])=>v.on);
+  const cpu=CPUS.find(c=>c.id===N.meta.settings.cpu)||CPUS[0];
+  $('#tBody').innerHTML=`<div class="panel" style="text-align:center">
+     <p style="font-weight:900;margin:0;font-size:1.2rem">「みんなと対戦」→「クラス対戦に参加」で、この番号を入れてね</p>
+     ${pinBig(N.pin)}
+     <p style="font-weight:900;font-size:1.3rem;margin:6px 0">参加している人：<b style="color:var(--matcha);font-size:2rem">${on.length}</b> 人</p>
+     <div class="tgrid">${ps.map(([u,v])=>`<span class="${v.on?'':'off'}">${esc(v.l)}</span>`).join('')}</div>
+     <p class="note">対戦あいて：${cpu.emoji} ${cpu.name}（${(+N.meta.settings.cpuTime).toFixed(1)}秒）／札 ${N.meta.settings.cards}枚／${N.meta.settings.q}首</p>
+     <button class="btn shu big" id="tStart" ${on.length?'':'disabled'}>スタート！</button>
+     <p class="note">読み上げは この端末から流れます。スピーカーやプロジェクターにつないでおくと聞きやすいです。</p></div>`;
+  $('#tStart').onclick=()=>{ unlockSpeech(); teacherStart(); };
+}
+function teacherStart(){
+  const st=N.meta.settings; const Q=Math.min(st.q,100);
+  H={type:'class',timers:[],Q,queue:shuffle(POEMS.map(p=>p.id)).slice(0,Q),field:[],read:{},n:0,readCount:0,takenIdx:null,resolved:{},cls:0,cpuS:0,agg:{}};
+  hostFillField(st.cards);
+  N.phase='playing';
+  N.ref.child('meta/state').set('playing');
+  teacherNext();
+}
+function teacherCount(){
+  const el=$('#tCount'); if(!el||!N.round) return;
+  const on=Object.values(N.players).filter(v=>v.on).length;
+  el.textContent=`✋ 押した人 ${N.tapsN||0} / ${on} 人`;
+}
+function teacherNext(){
+  const target=hostNextTarget();
+  if(target==null){ teacherEnd(); return; }
+  H.n++;
+  const st=N.meta.settings, p=P(target), cpu=CPUS.find(c=>c.id===st.cpu)||CPUS[0];
+  // CPUのタイム：設定の秒数（少しゆらぎ）と、場の札から「決まる」ところまで聞く時間の、おそいほう
+  const ms=msPerChar(); const R=buildReading(p,false,st.readShimo);
+  const d=decisiveFor(p,H.field); const dt=LEAD+((R.kmap[d-1]||0)+1)*ms+220+Math.random()*200;
+  const cpuT=Math.round(Math.max(st.cpuTime*1000*(0.88+Math.random()*0.24),dt));
+  const startAt=serverNow()+START_DELAY;
+  const round={n:H.n,q:H.Q,target,field:H.field.slice(),startAt,cpu:cpu.id,cls:H.cls,cpuS:H.cpuS};
+  N.round=round; N.tapsN=0; N.curN=H.n; N.phase='playing';
+  N.ref.child('round').set(round);
+  // 先生の画面
+  $('#tBody').innerHTML=`
+    <div class="score-board">
+      <div class="side"><div class="avatar" style="background:linear-gradient(135deg,#bfe3ff,#7fb8ea)">🏫</div><div class="who"><b>クラス</b><div class="pts" id="tCls">${H.cls}</div></div></div>
+      <div class="round-info"><big>${H.n}</big><span>/ ${H.Q} 首</span></div>
+      <div class="side r"><div class="avatar" style="background:${cpu.bg}">${cpu.emoji}</div><div class="who"><b>${cpu.name}</b><div class="pts" id="tCpu">${H.cpuS}</div></div></div>
+    </div>
+    <div class="reader"><span class="lbl">読み札</span><div id="tRead"><div class="listen">札の場所をおぼえよう…</div></div></div>
+    <div class="net-status"><span id="tTimer">⏳</span>　<span id="tCount"></span></div>
+    <div class="field" id="tField">${fieldHTML(H.field)}</div>
+    <div id="tRes"></div>`;
+  fitField($('#tField'),H.field,0.5);
+  teacherCount();
+  const delay=startAt-serverNow(); const perfStart=performance.now()+delay; const n=H.n;
+  const cd=setInterval(()=>{ const left=Math.ceil((perfStart-performance.now())/1000); const e=$('#tTimer'); if(e) e.textContent= left>0?`⏳ ${left} 秒後に読みます`:'📣 読んでいます'; },200);
+  H.timers.push(cd);
+  H.timers.push(setTimeout(()=>{ clearInterval(cd); if(!N||H.n!==n) return; startReveal('#tRead',p,{readShimo:st.readShimo,showText:true,hint:st.hint},perfStart,true); },Math.max(0,delay)));
+  // 押した人の数
+  const tref=N.ref.child('taps/'+n);
+  const fn=s=>{ N.tapsN=s.numChildren(); teacherCount(); };
+  tref.on('value',fn); N.offs.push(()=>tref.off('value',fn));
+  // CPUが取る時間＋少し待って判定
+  H.timers.push(setTimeout(()=>teacherResolve(n,cpuT),delay+cpuT+1500));
+}
+function teacherResolve(n,cpuT){
+  if(!H||H.resolved[n]) return; H.resolved[n]=1;
+  N.ref.child('taps/'+n).once('value').then(s=>{
+    const taps=s.val()||{};
+    const onIds=Object.entries(N.players).filter(([u,v])=>v.on).map(([u])=>u);
+    const total=new Set([...onIds,...Object.keys(taps)]).size;
+    const correct=Object.entries(taps).filter(([u,v])=>!v.w).sort((a,b)=>a[1].t-b[1].t);
+    const beat=correct.filter(([u,v])=>v.t<cpuT);
+    const classWin= total>0 && beat.length*2>total;
+    classWin?H.cls++:H.cpuS++;
+    beat.forEach(([u,v])=>{ const a=H.agg[u]||(H.agg[u]={w:0,ts:0}); a.w++; a.ts+=v.t; });
+    const top=correct.slice(0,5).map(([u,v])=>({l:(N.players[u]||{}).l||'?',t:v.t,b:v.t<cpuT}));
+    const target=N.round.target; H.read[target]=true; H.readCount++; H.takenIdx=H.field.indexOf(target);
+    N.ref.child('res').set({n,cpuT,beat:beat.length,total,classWin,cls:H.cls,cpuS:H.cpuS,top});
+    teacherShowRes({cpuT,beat:beat.length,total,classWin,top});
+  }).catch(netErr);
+}
+function teacherShowRes(r){
+  stopSpeak(); revealAll('#tRead');
+  const st=N.meta.settings, cpu=CPUS.find(c=>c.id===st.cpu)||CPUS[0], p=P(N.round.target);
+  r.classWin?SFX.good():SFX.bad();
+  $('#tCls').textContent=H.cls; $('#tCpu').textContent=H.cpuS;
+  const i=H.field.indexOf(N.round.target); const el=document.querySelector(`#tField .card[data-ni="${i}"]`); el&&el.classList.add('answer');
+  $('#tTimer').textContent=`${cpu.emoji} ${cpu.name}：${(r.cpuT/1000).toFixed(2)}秒`;
+  const last=H.readCount>=H.Q;
+  $('#tRes').innerHTML=`<div class="panel" style="margin-top:12px">
+    <div class="rp-msg ${r.classWin?'good':'bad'}" style="font-size:1.6rem">${r.beat} / ${r.total} 人が${cpu.name}より速かった！ → ${r.classWin?'クラスの勝ち！ 🎉':cpu.name+'の勝ち'}</div>
+    <div class="podium">${r.top.length?r.top.map((x,k)=>`<div class="${x.b?'b':''}"><b>${k+1}位</b> ${esc(x.l)}<span>${(x.t/1000).toFixed(2)}秒</span></div>`).join(''):'<p class="note">正しい札を取れた人はいませんでした</p>'}</div>
+    ${sheetPoem(p)}
+    <div style="text-align:center;margin-top:10px"><button class="btn shu big" id="tNext">${last?'けっか発表 🏁':'つぎへ ▶'}</button></div></div>`;
+  $('#tNext').onclick=()=>{ $('#tNext').disabled=true; teacherNext(); };
+  $('#tRes').scrollIntoView({behavior:'smooth',block:'start'});
+}
+function teacherEnd(){
+  const st=N.meta.settings, cpu=CPUS.find(c=>c.id===st.cpu)||CPUS[0];
+  const mvp=Object.entries(H.agg).map(([u,a])=>({l:(N.players[u]||{}).l||'?',w:a.w,avg:a.ts/a.w})).sort((a,b)=>b.w-a.w||a.avg-b.avg).slice(0,5);
+  N.ref.child('meta').update({state:'end',final:{cls:H.cls,cpuS:H.cpuS,cpu:cpu.id,q:H.Q}});
+  N.ref.onDisconnect().remove();
+  N.phase='final';
+  const res=H.cls>H.cpuS?'win':H.cls<H.cpuS?'lose':'draw';
+  res==='win'?SFX.win():SFX.lose();
+  $('#tBody').innerHTML=`<div class="panel result-hero"><p class="big ${res}">${res==='win'?'クラスの勝ち！':res==='lose'?cpu.name+'の勝ち':'引き分け'}</p>
+    <div class="vs-score"><span style="color:var(--ai)">クラス ${H.cls}</span> − <span style="color:var(--shu)">${H.cpuS} ${cpu.name}</span></div>
+    <div class="avatar" style="background:${cpu.bg};width:84px;height:84px;font-size:3rem">${cpu.emoji}</div>
+    <p style="font-weight:900">${cpu.name}「${res==='win'?cpu.lines.defeat:cpu.lines.win}」</p></div>
+    <div class="panel"><h3>🏅 ${cpu.name}に たくさん勝った人</h3>
+      <div class="podium">${mvp.length?mvp.map((x,k)=>`<div class="b"><b>${k+1}位</b> ${esc(x.l)}<span>${x.w}勝・平均 ${(x.avg/1000).toFixed(2)}秒</span></div>`).join(''):'<p class="note">今回はいませんでした</p>'}</div></div>
+    <div style="text-align:center"><button class="btn big" id="tClose">おわる</button></div>
+    <p class="note" style="text-align:center">もう一度あそぶときは「おわる」→「クラス対戦をひらく」で新しいPINを出してください。</p>`;
+  $('#tClose').onclick=()=>leaveRoom();
+}
+
+/* ---------- ボタン・キー ---------- */
+(function(){
+  $('#onlineBtn').addEventListener('click',()=>{ show('online'); fbInit().catch(()=>{ $('#onConn').textContent='⚠️ つながりませんでした（ネットワークを確認してね）'; }); });
+  $('#duelCreateBtn').addEventListener('click',()=>duelCreateView());
+  $('#duelJoinBtn').addEventListener('click',()=>pinEntryView('duel'));
+  $('#classJoinBtn').addEventListener('click',()=>pinEntryView('class'));
+  $('#teacherBtn').addEventListener('click',()=>{ PID=null; teacherSetupView(); fbInit().catch(netErr); });
+  $('#nlLeave').addEventListener('click',()=>{ if(!N||!N.ref||N.phase==='final'||confirm('部屋から出ますか？')) leaveRoom(); else{} });
+  $('#nQuit').addEventListener('click',()=>{ if(confirm('対戦をやめて部屋から出ますか？')) leaveRoom(); });
+  $('#tLeave').addEventListener('click',()=>{ if(!N||!N.ref||N.phase==='final'||confirm('クラス対戦をおわりにして、部屋をとじますか？')) leaveRoom(); });
+  document.addEventListener('click',e=>{ const c=e.target.closest('#nField .card'); if(c) nPick(+c.dataset.ni); });
+  document.addEventListener('keydown',e=>{ if(!$('#ngame').classList.contains('active')||!N) return; if(/^[0-9]$/.test(e.key)) nPick(e.key==='0'?9:(+e.key-1)); });
+  window.addEventListener('resize',()=>{ if(N&&N.round){ if($('#ngame').classList.contains('active')) fitField($('#nField'),N.round.field); if($('#tField')) fitField($('#tField'),H?H.field:N.round.field,0.5); } });
+})();
 </script>
 </body>
 </html>
