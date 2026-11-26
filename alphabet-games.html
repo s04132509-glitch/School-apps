@@ -85,6 +85,28 @@ main{padding:12px;max-width:1200px;margin:0 auto}
 #pts g.done .dot{fill:#1d4ed8} #pts g.done text{fill:#94a3b8}
 #pts g.bad .dot{fill:var(--ng);r:2.6px} #pts g.bad text{fill:var(--ng)}
 @keyframes blink{50%{opacity:.35}}
+
+/* 先生が出題（一斉授業） */
+.tstage{min-height:46vh;border-radius:24px;border:4px solid var(--line);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;padding:12px;text-align:center}
+.tstage .qno{font-size:clamp(20px,3vw,30px);font-weight:800;color:var(--sub)}
+.tstage .hid{font-size:min(30vw,220px);font-weight:900;color:#d6d0c2;line-height:1}
+.tstage .ans{font-size:min(30vw,220px);font-weight:800;line-height:1.05}
+.tstage .cap{font-size:clamp(22px,4vw,40px);font-weight:800}
+.tstage.show{border-color:var(--ok);background:#f2fbf5}
+.big.purple{background:var(--c4)}
+.note{color:var(--sub);font-size:14px}
+.tctl{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.tctl .big{min-width:150px}
+.tpts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:12px}
+.tpts div{display:flex;align-items:center;gap:4px;border:3px solid var(--line);border-radius:16px;padding:4px 6px;background:#fff}
+.tpts b{font-size:18px;padding:0 6px}
+.tpts button{min-height:52px;min-width:56px;border-radius:12px;border:none;font-weight:800;font-size:18px}
+.tpts .plus{background:var(--ok);color:#fff} .tpts .minus{background:#eee}
+.tlist{display:flex;flex-wrap:wrap;gap:6px;min-height:60px;padding:8px;border:3px dashed var(--line);border-radius:14px;background:#fff;margin-bottom:10px}
+.tlist button{min-height:48px;border-radius:12px;border:2px solid var(--line);background:#fffdf7;padding:2px 10px;font-weight:700;font-size:20px}
+.tpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:6px}
+.tpick button{min-height:64px;border-radius:12px;border:2px solid var(--line);background:#fff;font-weight:700;font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.tpick button small{font-size:11px;font-weight:700}
 .result{text-align:center;padding:20px}
 .timelist{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
 .timelist span{background:#fff;border:2px solid var(--line);border-radius:12px;padding:6px 12px;font-weight:700;font-size:18px}
@@ -238,7 +260,7 @@ function say(ch){
 }
 function tts(text){
   if(!("speechSynthesis" in window)) return;
-  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; if(enVoice) u.voice = enVoice; u.rate = S.rate; speechSynthesis.speak(u); }catch(e){}
+  try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; if(enVoice) u.voice = enVoice; u.rate = RATE_OVERRIDE || S.rate; speechSynthesis.speak(u); }catch(e){}
 }
 
 /* ========== 共通の道具 ========== */
@@ -342,6 +364,7 @@ function result(title, score, max, again){
 
 /* ========== ホーム ========== */
 const GAMES = [
+  { id:"teacher", name:"⓪ 先生が出題（一斉授業）", sub:"先生が出題の順番を決めて、みんなで聞いて答えよう", color:"#2b2b3a", fn:()=>teacherSetup() },
   { id:"karuta", name:"① カルタ", sub:"聞いて、文字をタッチ", color:"var(--c1)", fn:()=>karutaMenu() },
   { id:"memory", name:"② 神経衰弱", sub:"大文字と小文字のペアをさがそう", color:"var(--c2)", fn:()=>memoryMenu() },
   { id:"hidden", name:"③ かくれ文字さがし", sub:"まちの中から文字を見つけよう", color:"var(--c3)", fn:()=>hiddenGame() },
@@ -834,6 +857,107 @@ function dotGame(o){
   const timeUp = ()=>{ if(!ended){ ended = true; if(teamsOn()) nextTurn(); result("時間です！", k, n, ()=>dotGame(o)); } };
   gameClock($("#tm"), { onGameEnd: timeUp, onTurnEnd: timeUp });
 }
+
+
+/* ========== ⓪ 先生が出題（一斉授業） ========== */
+/* 先生が、出題の順番を授業の前にリストにしておく。授業では「出題 → 答えを見せる → つぎへ」と進める。
+   電子黒板につないだ1台で使う前提。リストを作る画面は、子どもに見せないとき（電子黒板の表示を止めているとき）に開く。 */
+const TLIST_KEY = "abc-tlist";
+function tlistLoad(){ try{ const v = JSON.parse(localStorage.getItem(TLIST_KEY)||"[]"); return Array.isArray(v) ? v.filter(id=>TITEMS().some(t=>t.id===id)) : []; }catch(e){ return []; } }
+function tlistSave(l){ try{ localStorage.setItem(TLIST_KEY, JSON.stringify(l)); }catch(e){} }
+let RATE_OVERRIDE = null;
+function slowly(fn){ RATE_OVERRIDE = 0.5; try{ fn(); } finally { RATE_OVERRIDE = null; } }
+function teacherSetup(){
+  leave();
+  let list = tlistLoad();
+  const items = TITEMS();
+  const find = id => items.find(t=>t.id===id);
+  app.innerHTML = `<div class="msg">⓪ 先生が出題（一斉授業）</div>
+    <p class="note" style="text-align:center">⚠ この画面には答えが出ます。電子黒板に映していないときに、出題の順番を作ってください（このタブレットに保存されます）。</p>
+    <div class="bar"><b class="grow">出題リスト（<span id="tn">0</span>問）</b><button class="hbtn" id="rand10">🎲 ランダムで10問作る</button><button class="hbtn" id="clr">リストを空にする</button></div>
+    <div class="tlist" id="tl"></div>
+    <p class="note">下から選ぶと、リストのうしろに入ります。リストの問題を押すと消えます。</p>
+    <div class="tpick" id="tp">${items.map(t=>`<button data-id="${t.id}">${t.pick}</button>`).join("")}</div>
+    <div class="bar" style="justify-content:center;margin-top:16px"><button class="big" id="startList">▶ リストの順に出題する</button><button class="big blue" id="startRand">🎲 おまかせ（ランダム）で出題する</button></div>`;
+  const draw = ()=>{ $("#tn").textContent = list.length; $("#tl").innerHTML = list.length ? list.map((id,i)=>`<button data-i="${i}">${i+1}. ${find(id).pick}</button>`).join("") : `<span class="note">まだありません</span>`; tlistSave(list); };
+  $("#tp").onclick = e=>{ const b = e.target.closest("button"); if(!b) return; list.push(b.dataset.id); sfx.flip(); draw(); };
+  $("#tl").onclick = e=>{ const b = e.target.closest("button"); if(!b) return; list.splice(+b.dataset.i,1); draw(); };
+  $("#rand10").onclick = ()=>{ list = shuffle(items).slice(0,10).map(t=>t.id); draw(); };
+  $("#clr").onclick = ()=>{ if(!list.length || confirm("出題リストを空にしますか？")){ list = []; draw(); } };
+  $("#startList").onclick = ()=>{ if(!list.length) return toast("リストに問題を入れてください"); ac(); teacherClass(list.slice()); };
+  $("#startRand").onclick = ()=>{ ac(); teacherClass(null); };
+  draw();
+}
+function teacherClass(list){
+  leave();
+  const items = TITEMS();
+  const find = id => items.find(t=>t.id===id);
+  const total = list ? list.length : null;
+  let qi = 0, cur = null, shown = false, last = null;
+  app.innerHTML = `<div class="tstage" id="ts"></div>
+    <div class="tctl">
+      <button class="big" id="play">▶ 出題</button>
+      <button class="big blue" id="again">🔁 もう一度</button>
+      <button class="big blue" id="slow">🐢 ゆっくり</button>
+      <button class="big green" id="show">👀 答えを見せる</button>
+      <button class="big purple" id="nextQ">⏭ つぎの問題</button>
+    </div>
+    ${TEXTRA()}
+    <div class="tpts" id="tp"></div>
+    <div class="bar" style="justify-content:center;margin-top:14px"><button class="hbtn" id="pickNow">🎯 その場で選ぶ</button><button class="hbtn" id="backSet">📝 出題リストへ</button></div>`;
+  const ts = $("#ts");
+  function stage(){
+    const head = `<div class="qno">${total ? `第${qi} 問 / ${total}` : `第${qi} 問（おまかせ）`}</div>`;
+    ts.classList.toggle("show", shown);
+    ts.innerHTML = head + (shown ? cur.big : `<div class="hid">？</div><div class="cap">よく聞いてね</div>`);
+  }
+  function load(item){ cur = item; shown = false; stage(); }
+  function next(){
+    if(total && qi>=total){ return teacherEnd(list); }
+    qi++;
+    if(list) load(find(list[qi-1]));
+    else { let t; do{ t = items[rnd(items.length)]; }while(items.length>1 && t===last); last = t; load(t); }
+  }
+  function pts(){
+    if(!teamsOn()){ $("#tp").innerHTML = ""; return; }
+    $("#tp").innerHTML = Array.from({length:S.teams},(_,i)=>`<div style="border-color:${TEAM_COLORS[i]}"><b style="color:${TEAM_COLORS[i]}">${i+1}班</b><button class="plus" data-t="${i}" data-d="1">＋1</button><button class="minus" data-t="${i}" data-d="-1">−1</button></div>`).join("");
+  }
+  $("#tp").onclick = e=>{ const b = e.target.closest("button"); if(!b) return; const t = +b.dataset.t, d = +b.dataset.d;
+    SC.pts[t] = Math.max(0, SC.pts[t] + d); save(SCORE_KEY, SC); renderScores(); if(d>0){ sfx.ok(); starsAt(b); } };
+  $("#play").onclick = ()=>{ ac(); cur.speak(); };
+  $("#again").onclick = ()=>cur.speak();
+  $("#slow").onclick = ()=>slowly(()=>cur.speak());
+  $("#show").onclick = ()=>{ if(shown) return; shown = true; stage(); sfx.ok(); sfx.clap(); starsAt(ts); cur.speakAnswer ? cur.speakAnswer() : cur.speak(); };
+  $("#nextQ").onclick = next;
+  $("#backSet").onclick = teacherSetup;
+  $("#pickNow").onclick = ()=>{
+    if(!confirm("問題を選ぶ画面には答えが出ます。電子黒板の表示を止めてから開いてください。開きますか？")) return;
+    const ov = document.createElement("div"); ov.className = "overlay";
+    ov.innerHTML = `<div class="sheet"><div class="bar"><h2 class="grow">🎯 この問題を出す</h2><button class="big gray" id="pc">やめる</button></div><div class="tpick">${items.map(t=>`<button data-id="${t.id}">${t.pick}</button>`).join("")}</div></div>`;
+    document.body.appendChild(ov);
+    $("#pc", ov).onclick = ()=>ov.remove();
+    $(".tpick", ov).onclick = e=>{ const b = e.target.closest("button"); if(!b) return; ov.remove(); load(find(b.dataset.id)); toast("問題を入れかえました。▶ 出題 を押してください"); };
+    onLeave(()=>ov.remove());
+  };
+  TEXTRA_BIND();
+  pts(); next();
+}
+function teacherEnd(list){
+  leave(); sfx.fan(); sfx.clap();
+  app.innerHTML = `<div class="result"><div class="stars">★★★</div><div class="msg">${list.length}問 おしまい！</div>
+    <div class="bar" style="justify-content:center;margin-top:20px"><button class="big" id="againT">もう一度 同じ順で</button><button class="big blue" id="setT">📝 出題リストへ</button><button class="big gray" id="toHomeT">ホームへ</button></div></div>`;
+  $("#againT").onclick = ()=>teacherClass(list.slice()); $("#setT").onclick = teacherSetup; $("#toHomeT").onclick = home;
+}
+
+/* 先生が出題で使う問題（大文字・小文字 52文字） */
+function TITEMS(){
+  const say1 = c => ()=>{ if(VOICE[c.toUpperCase()] && RATE_OVERRIDE===null) say(c); else tts((c===c.toUpperCase() ? "capital " : "small ") + c.toUpperCase()); };
+  return UP.concat(LO).map(c=>({ id:c, pick:`<span class="ltr">${c}</span><small>${c===c.toUpperCase()?"大文字":"小文字"}</small>`,
+    big:`<div class="ans ltr">${c}</div><div class="cap">${c===c.toUpperCase()?"大文字":"小文字"}の ${c}</div>`, speak:say1(c) }));
+}
+function TEXTRA(){ return ""; }
+function TEXTRA_BIND(){}
+const SCORE_KEY = "abc-scores";
 
 /* ========== 先生用の設定 ========== */
 (function longPress(){
